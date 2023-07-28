@@ -111,7 +111,7 @@ class SongDataCollector(object):
             mbz.set_useragent(user_agent, version)
             mbz.auth(self.MUSICBRAINZ_USER, self.MUSICBRAINZ_TOKEN)
         mbz_song = mbz.get_recordings_by_isrc(isrc)
-        return mbz.get_recording_by_id(mbz_song['recording-list'][0]['id'], includes=['artists'])
+        return mbz.get_recording_by_id(mbz_song['isrc']['recording-list'][0]['id'], includes=['artists'])
     
 
     def get_musicbrainz_artist(self, user_agent, version, art_id, auth=False):
