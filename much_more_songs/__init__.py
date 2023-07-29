@@ -202,8 +202,8 @@ class InformationExtractor(object):
                         creative_works[cw_sub_str] = {'count': 0, 'annotation_number': {}}
                 if ent.label_ == 'PERSON':
                     per_sub_str = re.sub(r'[’\']s$', '', ent.text)
-                if per_sub_str not in people:
-                    people[per_sub_str] = {'count': 0, 'annotation_number': {}}
+                    if per_sub_str not in people:
+                        people[per_sub_str] = {'count': 0, 'annotation_number': {}}
                 
         return creative_works, people
     
@@ -249,11 +249,20 @@ class InformationExtractor(object):
         return creative_works, people
     
 
+    def extract_information(self):
+        creative_works, people = self.get_entities()
+        creative_works, people = self.store_entities(creative_works, people)
+        return creative_works, people
+    
+
+
+
+
 class CandidateExtractor(object):
     def __init__(self, creative_works):
         self.creative_works = creative_works
     
-    def wikidata_reconciliation(query):
+    def wikidata_reconciliation(self, query):
         API_WD = "https://www.wikidata.org/w/api.php"
         params = {
             'action': 'wbsearchentities',
@@ -269,6 +278,7 @@ class CandidateExtractor(object):
     def get_candidates(self):
         candidates = {}
         for cw in self.creative_works:
+            candidates[cw] = []
             r = self.wikidata_reconciliation(cw)
 
             if 'search' in r and len(r['search']) >= 1: # if there is at least one result
@@ -287,20 +297,23 @@ class CandidateExtractor(object):
                         candidates[cw].append(entity)
         
         return candidates
+
     
 
+
+
+
 class Disambiguator(object):
-    def __init__(self, people, candidates):
+    def __init__(self, people, candidates, annotations):
         self.people = people
         self.candidates = candidates
+        self.annotations = annotations
 
     def assign_scores(self):
         req = 0 # this is the number of requests made to the WD endpoint
-
-        people = []
-        for per in people:
-            people.append((per, people[per]['count']))
-
+        people_list = []
+        for per in self.people:
+            people_list.append((per, self.people[per]['count']))
 
         for cw in self.candidates:
             relevance = len(self.candidates[cw])
@@ -314,7 +327,7 @@ class Disambiguator(object):
                 cand['person_in_description'] = 0 #this is the number of times the person is mentioned in the description of the candidate
                 cand['person_in_wikidata'] = 0 #this is the number of times a person is mentioned in the wikidata page of the candidate
                 
-                for per in people:
+                for per in people_list:
                     per_split = per[0].split(' ')
                     if len(per_split) > 1:
                         per_ts = per_split[-1]  #take the last token of the person name [SI PUO' FARE MEGLIO INCLODENDO TUTTI I TOKEN DELLA PERSONA IN UN CICLO FOR E VEDERE SE SONO TUTTI IN DESCRIPTION ECC.]
@@ -371,9 +384,9 @@ class Disambiguator(object):
         return self.candidates
 
 
-    def get_clean_annotations(self, annotations):
+    def get_clean_annotations(self):
         sents = []
-        for ann in annotations:
+        for ann in self.annotations:
             clean_txt = ann[1].replace('\n\n', ' ').replace('\n', ' ').replace('   ', ' ').replace('  ', ' ')
             sts = sent_tokenize(clean_txt)
             for s in sts:
@@ -381,9 +394,9 @@ class Disambiguator(object):
         return sents
     
 
-    def get_sentence_similarity(self, annotations):
+    def get_sentence_similarity(self):
         to_embed = {}
-        sents = self.get_clean_annotations(annotations)
+        sents = self.get_clean_annotations()
         model = SentenceTransformer('all-mpnet-base-v2') 
 
         for cw in self.candidates:
@@ -420,6 +433,19 @@ class Disambiguator(object):
             if chosen[cw]['final_score'] <= 1 or chosen[cw]['similarity_score'] <= 0.2:
                 del chosen[cw]
         return chosen
+    
+
+    def disambiguate(self):
+        self.candidates = self.assign_scores()
+        print("SCORES:", self.candidates)
+        self.candidates = self.get_sentence_similarity()
+        print("SIMILARITY:", self.candidates)
+        self.candidates = self.get_final_candidates()
+        print("FINAL:", self.candidates)
+        return self.candidates
+
+
+
 
 
 class Scraper(object):
@@ -442,7 +468,7 @@ class Scraper(object):
     
     def scrape_wikipedia_page(self):
         for cw in self.entities:
-            url = cw['wikipedia_url']
+            url = self.entities[cw]['wikipedia_url']
 
             page = requests.get(url)
             soup = BeautifulSoup(page.content, "html.parser").select('body')[0]
@@ -458,7 +484,7 @@ class Scraper(object):
                     if el.name == 'ul':
                         li_tags.extend(el.find_all('li'))
             
-            cw['li_tags'] = li_tags
+            self.entities[cw]['li_tags'] = li_tags
 
         return self.entities
     
@@ -466,7 +492,7 @@ class Scraper(object):
 
     def get_entity_type(self):
         for cw in self.entities:
-            url = cw['wikipedia_url']
+            url = self.entities[cw]['wikipedia_url']
             base_url = url.replace('https://en.wikipedia.org/wiki/', '')
 
             db_query_ent_type = """
@@ -509,14 +535,14 @@ class Scraper(object):
 
                 cw_type = sparql.query().convert()['results']['bindings'][0]['type']['value'].replace('http://dbpedia.org/ontology/', '')
             
-            cw['dbpedia-type'] = cw_type
+            self.entities[cw]['dbpedia-type'] = cw_type
         return self.entities
 
 
 
     def get_wiki_links(self):
         for cw in self.entities:
-            url = cw['wikipedia_url']
+            url = self.entities[cw]['wikipedia_url']
             base_url = url.replace('https://en.wikipedia.org/wiki/', '')
 
             db_query = """
@@ -553,7 +579,7 @@ class Scraper(object):
             wld = {}
             ent_id = 0
             for link in links:
-                for li in cw['li_tags']:
+                for li in self.entities[cw]['li_tags']:
                     a_tags = li.find_all('a')
 
                     for a in a_tags:
@@ -565,14 +591,14 @@ class Scraper(object):
                                 wld[ls] = {"wikipedia link": link, "text": [], "entity id": "Entity-"+str(ent_id), 'class': classes[links.index(link)], 'label': label[links.index(link)],'db_uri': db_uri[links.index(link)]}
                             if a.text not in wld[ls]["text"]:
                                 wld[ls]['text'].append(a.text)
-            cw['wiki_links'] = wld
+            self.entities[cw]['wiki_links'] = wld
 
         
         for cw in self.entities:
             fast_check = {}
-            for k in cw['wiki_links']:
-                fast_check[cw['wiki_links'][k]['entity id']] = (cw['wiki_links'][k]['wikipedia link'] , cw['wiki_links'][k]['class'], cw['wiki_links'][k]['db_uri'], cw['wiki_links'][k]['label'])
-            cw['fast-check'] = fast_check
+            for k in self.entities[cw]['wiki_links']:
+                fast_check[self.entities[cw]['wiki_links'][k]['entity id']] = (self.entities[cw]['wiki_links'][k]['wikipedia link'] , self.entities[cw]['wiki_links'][k]['class'], self.entities[cw]['wiki_links'][k]['db_uri'], self.entities[cw]['wiki_links'][k]['label'])
+            self.entities[cw]['fast-check'] = fast_check
     
         return self.entities
 
@@ -582,26 +608,33 @@ class Scraper(object):
             to_parse = []
             src_to_parse = [] #will be reused to store the source string in the final graph
 
-            for li in cw['li_tags']:
+            for li in self.entities[cw]['li_tags']:
                 str_li = str(li)
                 src_li = re.sub(r'<.+?>', '', str_li)
                 src_li = re.sub(r'\[[0-9]+\]', ' ', src_li)
                 src_to_parse.append(src_li)
 
-                for k in cw['wiki_links']:
+                for k in self.entities[cw]['wiki_links']:
                     if k in str_li:
-                        str_li  = str_li.replace(k, cw['wiki_links'][k]['entity id'])
+                        str_li  = str_li.replace(k, self.entities[cw]['wiki_links'][k]['entity id'])
                         
                 str_li = re.sub(r'<.+?>', '', str_li)
                 str_li = re.sub(r'\[[0-9]+\]', ' ', str_li) #remove the numbers in square brackets (wikidata references)
                 to_parse.append(str_li)
             to_parse_txt = ' '.join(to_parse)
-            cw['to_parse'] = to_parse
-            cw['to_parse_txt'] = to_parse_txt
+            self.entities[cw]['to_parse'] = to_parse
+            self.entities[cw]['to_parse_txt'] = to_parse_txt
 
         return self.entities
     
 
+    def scrape(self):
+        self.get_wikipedia_url()
+        self.scrape_wikipedia_page()
+        self.get_entity_type()
+        self.get_wiki_links()
+        self.replace_entity_names()
+        return self.entities
 
 
 
@@ -610,15 +643,15 @@ class Scraper(object):
 
 
 class RelationExtractor(object):
-    token = os.getenv('GOOGLEBARD_TOKEN')
+    GOOGLEBARD_TOKEN = os.getenv('GOOGLEBARD_TOKEN')
 
     def __init__(self, entties_dict):
         self.entities = entties_dict
     
     def get_relations_bard(self):
-        bard = Bard(token=self.token)
+        bard = Bard(token=self.GOOGLEBARD_TOKEN)
         for cw in self.entities:
-            bard_res = bard.get_answer("You are an expert in relation extraction from plain text and your aim is to identify the existing relations between the creative work '1984', which is the implicit subject of the text you will be fed with, and other ENTITIES that you will find in the text. ### Return the relationships between '"+cw+"' and the entities marked as 'Entity- ' in the text in the following format: subject | relation | "+cw+" as a pandas dataframe following this example: ```df = pd.DataFrame({'Entity': ['Entity-', 'Entity-', 'Entity-'], 'Relation': ['based on', 'derived from', 'inspired by'], '1984': '1984' })```. ### Text: "+cw['to_parse_txt'])
+            bard_res = bard.get_answer("You are an expert in relation extraction from plain text and your aim is to identify the existing relations between the creative work '1984', which is the implicit subject of the text you will be fed with, and other ENTITIES that you will find in the text. ### Return the relationships between '"+cw+"' and the entities marked as 'Entity- ' in the text in the following format: subject | relation | "+cw+" as a pandas dataframe following this example: ```df = pd.DataFrame({'Entity': ['Entity-', 'Entity-', 'Entity-'], 'Relation': ['based on', 'derived from', 'inspired by'], '1984': '1984' })```. ### Text: "+self.entities[cw]['to_parse_txt'])
             out_list = bard_res['content'].replace('\n\n', ' ').replace('\n', ' ').replace('    ', ' ').replace('   ', ' ').replace('  ', ' ').split('```')
 
             for el in out_list:
@@ -628,7 +661,7 @@ class RelationExtractor(object):
             df_string = re.sub(r'(python)\s?import pandas as pd (.+)\s?\=', '', out_list[df_idx])
             df_string = re.sub(r'print\(.+\)', '', df_string).strip()
 
-            cw['entity-relations'] = eval(df_string).to_dict()
+            self.entities[cw]['entity-relations'] = eval(df_string).to_dict()
         return self.entities
 
 
@@ -636,57 +669,56 @@ class RelationExtractor(object):
         for cw in self.entities:
             groups = {}
             count = 0
-            for sent in cw['to_parse']:
+            for sent in self.entities[cw]['to_parse']:
                 g = re.findall(r'Entity-[0-9]+', sent)
                 if g:
                     groups[count] = g
                 count += 1
-            cw['entity-groups'] = groups
+            self.entities[cw]['entity-groups'] = groups
         return self.entities
     
 
     def assign_missing_relations(self):
         for cw in self.entities:
             entity_relation = {}
-            df = pd.Dataframe(cw['entity-relation'])
-
+            df = pd.DataFrame(self.entities[cw]['entity-relations'])
             for ent in df.values:
-                relation = df[df['Entity'] == ent]['Relation'].values[0]
-                entity_relation[ent] = relation
-                for group in cw['entity-groups']:
-                    if ent in cw['entity-groups'][group]:
-                        for e in cw['entity-groups'][group]:
+                relation = df[df['Entity'] == ent[0]]['Relation'].values[0]
+                entity_relation[ent[0]] = relation
+                for group in self.entities[cw]['entity-groups']:
+                    if ent[0] in self.entities[cw]['entity-groups'][group]:
+                        for e in self.entities[cw]['entity-groups'][group]:
                             if e not in df['Entity'].values:
                                 entity_relation[e] = relation
-            cw['entity-relation'] = entity_relation
+            self.entities[cw]['entity-relation'] = entity_relation
         return self.entities
     
 
     def disambiguate_relations(self):
         lemma_synset = [('base', 'establish.v.08', 'based on'), ('inspire', 'inspire.v.02', 'inspired by'), ('influence', 'determine.v.02', 'influenced by'), ('derive', 'derive.v.04', 'derived from'), ('adapt', 'adapt.v.01', 'adapted from'), ('reference', 'reference.v.01', 'references'), ('allude', 'allude.v.01', 'alludes to'), ('mention', 'mention.v.01', 'mentions'), ('quote', 'quote.v.01', 'quotes')]
         for cw in self.entities:
-            for ent in cw['entity-relation']:
+            for ent in self.entities[cw]['entity-relation']:
                 #if not re.match(r'based\son|(inspired|influenced)(\sby)?|(derive[sd]|adapted)(\sfrom)?|(reference|mention)(s|ed\s(by|in)?)?|alludes?\sto', entity_relation[ent]):
-                if re.match(r'based\son', cw['entity-relation'][ent]):
-                    cw['entity-relation'][ent] = 'based on'
-                elif re.match('inspired\sby', cw['entity-relation'][ent]):
-                    cw['entity-relation'][ent] = 'inspired by'
-                elif re.match('influenced\sby', cw['entity-relation'][ent]):
-                    cw['entity-relation'][ent] = 'influenced by'
-                elif re.match('derive[ds](\sfrom)?',cw['entity-relation'][ent]):
-                    cw['entity-relation'][ent] = 'derived from'
-                elif re.match('adapted(\sfrom)?', cw['entity-relation'][ent]):
-                    cw['entity-relation'][ent] = 'adapted from'
-                elif re.match('reference(s|d)?\s?(by|in)?', cw['entity-relation'][ent]):
-                    cw['entity-relation'][ent] = 'references'
-                elif re.match('mention(s|ed\s(by|in)?)?', cw['entity-relation'][ent]):
-                    cw['entity-relation'][ent] = 'mentions'
-                elif re.match('alludes?(\sto)?', cw['entity-relation'][ent]):
-                    cw['entity-relation'][ent] = 'alludes to'
-                elif re.match('quotes?(\sto)?', cw['entity-relation'][ent]):
-                    cw['entity-relation'][ent] = 'quotes'
+                if re.match(r'based\son', self.entities[cw]['entity-relation'][ent]):
+                    self.entities[cw]['entity-relation'][ent] = 'based on'
+                elif re.match('inspired\sby', self.entities[cw]['entity-relation'][ent]):
+                    self.entities[cw]['entity-relation'][ent] = 'inspired by'
+                elif re.match('influenced\sby', self.entities[cw]['entity-relation'][ent]):
+                    self.entities[cw]['entity-relation'][ent] = 'influenced by'
+                elif re.match('derive[ds](\sfrom)?',self.entities[cw]['entity-relation'][ent]):
+                    self.entities[cw]['entity-relation'][ent] = 'derived from'
+                elif re.match('adapted(\sfrom)?', self.entities[cw]['entity-relation'][ent]):
+                    self.entities[cw]['entity-relation'][ent] = 'adapted from'
+                elif re.match('reference(s|d)?\s?(by|in)?', self.entities[cw]['entity-relation'][ent]):
+                    self.entities[cw]['entity-relation'][ent] = 'references'
+                elif re.match('mention(s|ed\s(by|in)?)?', self.entities[cw]['entity-relation'][ent]):
+                    self.entities[cw]['entity-relation'][ent] = 'mentions'
+                elif re.match('alludes?(\sto)?', self.entities[cw]['entity-relation'][ent]):
+                    self.entities[cw]['entity-relation'][ent] = 'alludes to'
+                elif re.match('quotes?(\sto)?', self.entities[cw]['entity-relation'][ent]):
+                    self.entities[cw]['entity-relation'][ent] = 'quotes'
                 else:
-                    pos = nlp(cw['entity-relation'][ent])
+                    pos = nlp(self.entities[cw]['entity-relation'][ent])
                     for tok in pos:
                         if tok.pos_ == 'VERB':
                             lemma = tok.lemma_
@@ -696,13 +728,60 @@ class RelationExtractor(object):
                                     similarity = wn.lch_similarity(wn.synset(syn_a[1]), wn.synset(syn_b.name()))
                                     if similarity >= 2.5 and similarity >= best_syn[1]:
                                         best_syn = [syn_a[2], similarity]
-                            cw['entity-relation'][ent] = best_syn[0]
+                            self.entities[cw]['entity-relation'][ent] = best_syn[0]
                         else:
-                            cw['entity-relation'][ent] = 'general influence'
+                            self.entities[cw]['entity-relation'][ent] = 'general influence'
 
-            if cw['fast-check'][ent][1] == 'Artist' or cw['fast-check'][ent][1] == 'Group': #Here we say that if the entity is an artist or a group, we can assume that the relation is 'general influence' rather than 'based on' or 'alludes to' or 'mentions' or 'references
-                if cw['entity-relation'][ent] == 'based on' or cw['entity-relation'][ent] == 'references' or cw['entity-relation'][ent] == 'mentions' or cw['entity-relation'][ent] == 'alludes to' or cw['entity-relation'][ent] == 'derived from':
-                    cw['entity-relation'][ent] = 'general influence'
+            if self.entities[cw]['fast-check'][ent][1] == 'Artist' or self.entities[cw]['fast-check'][ent][1] == 'Group': #Here we say that if the entity is an artist or a group, we can assume that the relation is 'general influence' rather than 'based on' or 'alludes to' or 'mentions' or 'references
+                if self.entities[cw]['entity-relation'][ent] == 'based on' or self.entities[cw]['entity-relation'][ent] == 'references' or self.entities[cw]['entity-relation'][ent] == 'mentions' or self.entities[cw]['entity-relation'][ent] == 'alludes to' or self.entities[cw]['entity-relation'][ent] == 'derived from':
+                    self.entities[cw]['entity-relation'][ent] = 'general influence'
         
         return self.entities
 
+
+    def extract_relations(self):
+        self.get_relations_bard()
+        self.group_entities()
+        self.assign_missing_relations()
+        self.disambiguate_relations()
+        return self.entities
+
+
+
+class MuchMoreRunner(object):
+    def __init__(self, song_id, user_agent, version):
+        self.song_id = song_id
+        self.user_agent = user_agent
+        self.version = version
+
+    def run(self):
+        song_data = SongDataCollector(self.song_id).get_song_data(self.user_agent, self.version)
+        print('______SONG DATA______')
+        print(song_data)
+
+        annotations = song_data['annotations']
+        ie = InformationExtractor(annotations)
+        creative_works, people = ie.extract_information()
+        print('______INFORMATION EXTRACTOR______')
+        print(creative_works, people)
+
+        ce = CandidateExtractor(creative_works)
+        candidates = ce.get_candidates()
+        print('______CANDIDATE EXTRACTOR______')
+        print(candidates)
+
+        disambiguator = Disambiguator(people, candidates, annotations)
+        candidates = disambiguator.disambiguate()
+        print('______DISAMBIGUATOR______')
+        print(candidates)
+
+        scraper = Scraper(disambiguator.candidates)
+        scraped = scraper.scrape()
+        print('______SCRAPER______')
+        print(scraped)
+
+        re = RelationExtractor(scraper.entities)
+        x = re.extract_relations()
+        print('______RELATION EXTRACTOR______')
+        print(x)
+        return x

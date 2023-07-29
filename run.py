@@ -1,8 +1,10 @@
-from get_song_data import *
+from much_more_songs import *
 
-my_song = SongDataCollector('1C2QJNTmsTxCDBuIgai8QV')
+my_runner = MuchMoreRunner('1C2QJNTmsTxCDBuIgai8QV', "get Resistance data", 0.1)
+my_data = my_runner.run()
 
-x = my_song.get_song_data('tt', 0.1)
+print(my_data)
 
-print(x)
+
+
 
