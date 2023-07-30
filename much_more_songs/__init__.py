@@ -25,6 +25,7 @@ class SongDataCollector(object):
 
     def __init__(self, spotify_id):
         self.spotify_id = spotify_id
+        self.spotify_headers = self.get_spotify_headers()
 
     def __str__(self):
         return f"Song: {self.spotify_id}"
@@ -48,43 +49,34 @@ class SongDataCollector(object):
         return { 'Authorization': str(token_type) + ' ' + str(access_token), }
 
 
-    def get_spotify_song(self, headers=None):
+    def get_spotify_song(self):
         # Get song data from Spotify API
-        if headers == None:
-            headers = self.get_spotify_headers()
-        return requests.get(f'https://api.spotify.com/v1/tracks/{self.spotify_id}', headers=headers).json()
+        return requests.get(f'https://api.spotify.com/v1/tracks/{self.spotify_id}', headers=self.spotify_headers).json()
 
 
-    def get_spotify_artist(self, artist_id, headers=None):
+    def get_spotify_artist(self, artist_id):
         # Get song data from Spotify API
-        if headers == None:
-            headers = self.get_spotify_headers()
-        return requests.get(f'https://api.spotify.com/v1/artists/{artist_id}', headers=headers).json()
-
+        return requests.get(f'https://api.spotify.com/v1/artists/{artist_id}', headers=self.spotify_headers).json()
 
 
     def save_spotify_data(self):
         # Save song data from Spotify API
         song = {}
-        headers = self.get_spotify_headers()
-        song_data = self.get_spotify_song(headers)
-        song['spotify_id'] = song_data['id']
-        song['spotify_href'] = song_data['href']
+        song_data = self.get_spotify_song()
+        song['spotify-id'] = song_data['id']
+        song['spotify-href'] = song_data['href']
         song['name'] = song_data['name']
         song['artists'] = []
         for artist in song_data['artists']:
             artist_dict = {}
-            artist_dict['spotify_id'] = artist['id']
-            artist_dict['spotify_href'] = artist['href']
+            artist_dict['spotify-id'] = artist['id']
+            artist_dict['spotify-href'] = artist['href']
             artist_dict['name'] = artist['name']
-            get_art =  self.get_spotify_artist(artist['id'], headers)
+            get_art =  self.get_spotify_artist(artist['id'])
             artist_dict['genres'] = get_art['genres']
             song['artists'].append(artist_dict)
         song['isrc'] = song_data['external_ids']['isrc']
-
         return song
-
-
 
 #_______________________________________________________
 # Genius API
@@ -109,10 +101,9 @@ class SongDataCollector(object):
         annotations_list = []
         annotations = genius.song_annotations(genius_id)
         for tup in annotations:
-            new_tup = (tup[0], tup[1][0][0])
+            new_tup = (tup[0], tup[1][0][0]) #Here I take just the first annotation (I haven't found yet a fragment with more than one annotation)
             annotations_list.append(new_tup)
         store['annotations'] = annotations_list
-
         return store
 
 #_______________________________________________________
@@ -142,28 +133,25 @@ class SongDataCollector(object):
         mbz.auth(self.MUSICBRAINZ_USER, self.MUSICBRAINZ_TOKEN)
 
         mbz_song = self.get_musicbrainz_song(user_agent, version, isrc)
-        if 'artists' not in store:
-            art_dict = {}
-            for artist in mbz_song['artist-credit']:
-                art_dict['name'] = artist['artist']['name']
-                art_dict['mbz_id'] = artist['artist']['id']
-                art_dict['disambiguation'] = artist['artist']['disambiguation']
-                #art_dict['tags'] = artist['artist']['tags']
-            store['artists'] = art_dict
-        else:
-            for art in store['artists']: #for every artist in the song_ditionary
-                for mbz_art in mbz_song['recording']['artist-credit']:   #for every artist in the mbz dictionary
-                    if art['name'] == mbz_art['artist']['name']:   #if the name of the artist in the song dictionary is the same as the name of the artist in the mbz dictionary
-                        art['disambiguation'] = mbz_art['artist']['disambiguation'] #add the disambiguation to the song dictionary
-                        art['mbz_id'] = mbz_art['artist']['id'] #add the mbz id to the song dictionary
-                        #art['mbz_tags'] = {}
-                        #for tag in mbz_art['artist']['tag-list']: #for every tag in the mbz dictionary
-                        #    art['mbz_tags'][tag['name']] = tag['count'] #add the tag name and the tag count to the song dictionary
-                wts = self.get_musicbrainz_artist(user_agent, version, art['mbz_id'])
-                art['type'] = wts['artist']['type']
+        print(mbz_song)
+        artist_ids = [artist['artist']['id'] for artist in mbz_song['recording']['artist-credit']]
+        artist_data = {}
+        for artist_id in artist_ids:
+            if artist_id not in artist_data:
+                artist_data[artist_id] = self.get_musicbrainz_artist(user_agent, version, artist_id)
+        store['artists'] = []
+        for artist in mbz_song['recording']['artist-credit']:
+            artist_dict = {}
+            artist_dict['name'] = artist['artist']['name']
+            artist_dict['mbz_id'] = artist['artist']['id']
+            artist_dict['disambiguation'] = artist['artist']['disambiguation']
+            if artist_dict['mbz_id'] in artist_data:
+                wts = artist_data[artist_dict['mbz_id']]
+                artist_dict['type'] = wts['artist']['type']
                 for url in wts['artist']['url-relation-list']:
                     if url['type'] == 'wikidata':
-                        art['wikidata_url'] = url['target']
+                        artist_dict['wikidata_url'] = url['target']
+            store['artists'].append(artist_dict)
         return store
 
 
@@ -188,25 +176,67 @@ class SongDataCollector(object):
 class InformationExtractor(object):
     def __init__(self, annotation_list):
         self.annotation_list = annotation_list
-        
+
+    # FOLLOWS A MORE EFFICIENT VERSION THAT HOWEVER COUNTS ONLY ENTITIES RECOGNISED BY SPECY WITHOUT RESEARCHING THE STRINGS IN THE ANNOTATIONS AGAIN
+    """
+    import re
+    import spacy
+    from collections import defaultdict
+
+    class InformationExtractor(object):
+        def __init__(self, annotation_list):
+            self.annotation_list = annotation_list
+            self.nlp = spacy.load('en_core_web_sm')
+
+        def extract_information(self):
+            creative_works = defaultdict(lambda: {'count': 0, 'annotation_number': {}})
+            people = defaultdict(lambda: {'count': 0, 'annotation_number': {}})
+
+            for ann_num, annotation in enumerate(self.annotation_list):
+                doc = self.nlp(annotation[1])
+
+                for ent in doc.ents:
+                    ent_text = ent.text
+                    clean_ent_text = re.sub(r'[’\']s$', '', ent_text)
+                    if ent.label_ == 'WORK_OF_ART':
+                        if clean_ent_text not in creative_works:
+                            creative_works[clean_ent_text]['count'] = 0
+                        creative_works[clean_ent_text]['count'] += 1
+                        creative_works[clean_ent_text]['annotation_number'][ann_num] = creative_works[clean_ent_text].get(ann_num, 0) + 1
+
+                    if ent.label_ == 'PERSON':
+                        if clean_ent_text not in people:
+                            people[clean_ent_text]['count'] = 0
+                        people[clean_ent_text]['count'] += 1
+                        people[clean_ent_text]['annotation_number'][ann_num] = people[clean_ent_text].get(ann_num, 0) + 1
+
+                for person in list(people.keys()):
+                    last_word = person.split()[-1]
+                    occurrences = annotation[1].count(last_word)
+                    if occurrences > 0:
+                        people[person]['annotation_number'][ann_num] = people[person].get(ann_num, 0) + occurrences
+                        people[person]['count'] += occurrences
+
+            return dict(creative_works), dict(people)
+    """
     
     def get_entities(self):
         creative_works = {}
         people = {}
-        for idx, annotation in enumerate(self.annotation_list):
+        for annotation in self.annotation_list:
             doc = nlp(annotation[1])
             for ent in doc.ents:
+                ent_text = ent.text
+                ent_sub_str = re.sub(r'[’\']s$', '', ent_text)
                 if ent.label_ == 'WORK_OF_ART':
-                    cw_sub_str = re.sub(r'[’\']s$', '', ent.text)
-                    if cw_sub_str not in creative_works:
-                        creative_works[cw_sub_str] = {'count': 0, 'annotation_number': {}}
+                    if ent_sub_str not in creative_works:
+                        creative_works[ent_sub_str] = {'count': 0, 'annotation_number': {}}
                 if ent.label_ == 'PERSON':
-                    per_sub_str = re.sub(r'[’\']s$', '', ent.text)
-                    if per_sub_str not in people:
-                        people[per_sub_str] = {'count': 0, 'annotation_number': {}}
-                
+                    if ent_sub_str not in people:
+                        people[ent_sub_str] = {'count': 0, 'annotation_number': {}}
         return creative_works, people
     
+
     def store_entities(self, creative_works, people):
         for ann_num, ann in enumerate(self.annotation_list):
             clean_txt = re.sub(r'\W', ' ', ann[1]) #remove all the non alphanumeric characters
@@ -644,9 +674,27 @@ class Scraper(object):
 
 class RelationExtractor(object):
     GOOGLEBARD_TOKEN = os.getenv('GOOGLEBARD_TOKEN')
+    lemma_synset_map = [('base', 'establish.v.08', 'based on'), ('inspire', 'inspire.v.02', 'inspired by'),
+                             ('influence', 'determine.v.02', 'influenced by'), ('derive', 'derive.v.04', 'derived from'),
+                             ('adapt', 'adapt.v.01', 'adapted from'), ('reference', 'reference.v.01', 'references'),
+                             ('allude', 'allude.v.01', 'alludes to'), ('mention', 'mention.v.01', 'mentions'),
+                             ('quote', 'quote.v.01', 'quotes')]
+    
+    entity_relation_map = {
+            r'based\son': 'based on',
+            r'inspired\sby': 'inspired by',
+            r'influenced\sby': 'influenced by',
+            r'derive[ds](\sfrom)?': 'derived from',
+            r'adapted(\sfrom)?': 'adapted from',
+            r'reference(s|d)?\s?(by|in)?': 'references',
+            r'mention(s|ed\s(by|in)?)?': 'mentions',
+            r'alludes?(\sto)?': 'alludes to',
+            r'quotes?(\sto)?': 'quotes'
+        }
 
-    def __init__(self, entties_dict):
-        self.entities = entties_dict
+
+    def __init__(self, enties_dict):
+        self.entities = enties_dict
     
     def get_relations_bard(self):
         bard = Bard(token=self.GOOGLEBARD_TOKEN)
@@ -695,46 +743,35 @@ class RelationExtractor(object):
     
 
     def disambiguate_relations(self):
-        lemma_synset = [('base', 'establish.v.08', 'based on'), ('inspire', 'inspire.v.02', 'inspired by'), ('influence', 'determine.v.02', 'influenced by'), ('derive', 'derive.v.04', 'derived from'), ('adapt', 'adapt.v.01', 'adapted from'), ('reference', 'reference.v.01', 'references'), ('allude', 'allude.v.01', 'alludes to'), ('mention', 'mention.v.01', 'mentions'), ('quote', 'quote.v.01', 'quotes')]
         for cw in self.entities:
-            for ent in self.entities[cw]['entity-relation']:
-                #if not re.match(r'based\son|(inspired|influenced)(\sby)?|(derive[sd]|adapted)(\sfrom)?|(reference|mention)(s|ed\s(by|in)?)?|alludes?\sto', entity_relation[ent]):
-                if re.match(r'based\son', self.entities[cw]['entity-relation'][ent]):
-                    self.entities[cw]['entity-relation'][ent] = 'based on'
-                elif re.match('inspired\sby', self.entities[cw]['entity-relation'][ent]):
-                    self.entities[cw]['entity-relation'][ent] = 'inspired by'
-                elif re.match('influenced\sby', self.entities[cw]['entity-relation'][ent]):
-                    self.entities[cw]['entity-relation'][ent] = 'influenced by'
-                elif re.match('derive[ds](\sfrom)?',self.entities[cw]['entity-relation'][ent]):
-                    self.entities[cw]['entity-relation'][ent] = 'derived from'
-                elif re.match('adapted(\sfrom)?', self.entities[cw]['entity-relation'][ent]):
-                    self.entities[cw]['entity-relation'][ent] = 'adapted from'
-                elif re.match('reference(s|d)?\s?(by|in)?', self.entities[cw]['entity-relation'][ent]):
-                    self.entities[cw]['entity-relation'][ent] = 'references'
-                elif re.match('mention(s|ed\s(by|in)?)?', self.entities[cw]['entity-relation'][ent]):
-                    self.entities[cw]['entity-relation'][ent] = 'mentions'
-                elif re.match('alludes?(\sto)?', self.entities[cw]['entity-relation'][ent]):
-                    self.entities[cw]['entity-relation'][ent] = 'alludes to'
-                elif re.match('quotes?(\sto)?', self.entities[cw]['entity-relation'][ent]):
-                    self.entities[cw]['entity-relation'][ent] = 'quotes'
+            entity_relations = self.entities[cw]['entity-relation']
+            for ent in entity_relations:
+                relation_text = entity_relations[ent]
+                for regex, relation_label in self.entity_relation_map.items():
+                    if re.search(regex, relation_text):
+                        entity_relations[ent] = relation_label
+                        break
                 else:
-                    pos = nlp(self.entities[cw]['entity-relation'][ent])
+                    pos = nlp(entity_relations[ent])
                     for tok in pos:
                         if tok.pos_ == 'VERB':
                             lemma = tok.lemma_
-                            best_syn = ['general', 0]
-                            for syn_a in lemma_synset:
+                            best_syn = ['general influence', 0]
+                            for syn_a in self.lemma_synset:
                                 for syn_b in wn.synsets(lemma, pos=wn.VERB):
                                     similarity = wn.lch_similarity(wn.synset(syn_a[1]), wn.synset(syn_b.name()))
                                     if similarity >= 2.5 and similarity >= best_syn[1]:
                                         best_syn = [syn_a[2], similarity]
-                            self.entities[cw]['entity-relation'][ent] = best_syn[0]
+                            entity_relations[ent] = best_syn[0]
                         else:
-                            self.entities[cw]['entity-relation'][ent] = 'general influence'
+                            entity_relations[ent] = 'general influence'
+                        if entity_relations[ent] != 'general influence':
+                            break
+                    entity_relations[ent] = 'general influence'
 
-            if self.entities[cw]['fast-check'][ent][1] == 'Artist' or self.entities[cw]['fast-check'][ent][1] == 'Group': #Here we say that if the entity is an artist or a group, we can assume that the relation is 'general influence' rather than 'based on' or 'alludes to' or 'mentions' or 'references
-                if self.entities[cw]['entity-relation'][ent] == 'based on' or self.entities[cw]['entity-relation'][ent] == 'references' or self.entities[cw]['entity-relation'][ent] == 'mentions' or self.entities[cw]['entity-relation'][ent] == 'alludes to' or self.entities[cw]['entity-relation'][ent] == 'derived from':
-                    self.entities[cw]['entity-relation'][ent] = 'general influence'
+            if self.entities[cw]['fast-check'][ent][1] in {'Artist', 'Group'}:
+                if entity_relations[ent] not in {'general influence', 'influenced by', 'inspired by'}:
+                    entity_relations[ent] = 'general influence'
         
         return self.entities
 
