@@ -105,7 +105,7 @@ class SongDataCollector(object):
         annotations_list = []
         annotations = genius.song_annotations(genius_id)
         for tup in annotations:
-            new_tup = (tup[0], tup[1][0][0]) #Here I take just the first annotation (I haven't found yet a fragment with more than one annotation)
+            new_tup = (tup[0], tup[1][0][0].replace('\n\n', ' ').replace('\n', ' ').replace('  ', '')) #Here I take just the first annotation (I haven't found yet a fragment with more than one annotation)
             annotations_list.append(new_tup)
         store['annotations'] = annotations_list
         return store
@@ -195,7 +195,8 @@ class InformationExtractor(object):
             doc = nlp(annotation[1])
             for ent in doc.ents:
                 ent_text = ent.text
-                ent_sub_str = re.sub(r'[’\'](s)?$', '', ent_text)
+                ent_sub_str = re.sub(r'[’\']s$', '', ent_text)
+                ent_sub_str = re.sub(r'[^A-Za-z0-9]$', '', ent_sub_str)
                 if ent.label_ == 'WORK_OF_ART':
                     if ent_sub_str not in {self.song_data['album-name'], self.song_data['name']}:
                         if ent_sub_str not in creative_works:
@@ -729,8 +730,6 @@ class RelationExtractor(object):
             if self.entities[cw]['fast-check'][ent][1] in {'Artist', 'Group'}:
                 if entity_relations[ent] not in {'general influence', 'influenced by', 'inspired by'}:
                     entity_relations[ent] = 'general influence'
-
-            print("\n\n", entity_relations, "\n\n")
         return self.entities
 
 
