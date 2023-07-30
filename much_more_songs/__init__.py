@@ -68,7 +68,7 @@ class SongDataCollector(object):
         song_data = self.get_spotify_song()
         song['spotify-id'] = song_data['id']
         song['spotify-href'] = song_data['href']
-        song['name'] = song_data['name']
+        song['name'] = re.sub(r'\s?-?\s?([0-9]+)?\s?\(?[Rr]emaster(ed)?\)?','', song_data['name'])
         song['album-name'] = song_data['album']['name']
         song['artists'] = []
         for artist in song_data['artists']:
@@ -299,9 +299,12 @@ class CandidateExtractor(object):
                     
                     if res["boolean"] == True: #If the answer is true
                         entity = {}
-                        #entity['class'] = 'creative work' 
+                        #entity['class'] = 'creative work'
                         entity['id'] = result['title']
-                        entity['description'] = result['description']
+                        if 'description' in result:
+                            entity['description'] = result['description']
+                        else:
+                            continue
                         candidates[cw].append(entity)
             if candidates[cw] == []:
                 del candidates[cw]
