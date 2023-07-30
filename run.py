@@ -1,13 +1,14 @@
 from much_more_songs import *
 
-my_runner = MuchMoreRunner('7ouMYWpwJ422jRcDASZB7P', "get song data", 0.1)
+my_runner = MuchMoreRunner('26R3e7bjY6e9dlgghide8L', "get song data", 0.1)
 my_data = my_runner.run()
 
 print(my_data)
 
 
 
-#1C2QJNTmsTxCDBuIgai8QV  Muse Resitance --working
+#1C2QJNTmsTxCDBuIgai8QV  Resitance (Muse) --working
+#26R3e7bjY6e9dlgghide8L Tea in the desert (Police) -- working
 
 #4VqPOruhp5EdPBeR92t6lQ Muse Uprising -- no relation found (do not recognize 1984 and other Muse's songs cited in annotations)
 

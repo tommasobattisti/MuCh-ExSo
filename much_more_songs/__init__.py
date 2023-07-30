@@ -195,7 +195,7 @@ class InformationExtractor(object):
             doc = nlp(annotation[1])
             for ent in doc.ents:
                 ent_text = ent.text
-                ent_sub_str = re.sub(r'[’\']s$', '', ent_text)
+                ent_sub_str = re.sub(r'[’\'](s)?$', '', ent_text)
                 if ent.label_ == 'WORK_OF_ART':
                     if ent_sub_str not in {self.song_data['album-name'], self.song_data['name']}:
                         if ent_sub_str not in creative_works:
@@ -355,7 +355,7 @@ class Disambiguator(object):
                                         FILTER (CONTAINS((?label), '"""+per_ts+"""'))
                                         }"""
                     if req % 5 == 0:
-                        time.sleep(5) # to avoid to be blocked by WD endpoint for too many requests in a short time   
+                        time.sleep(5) # to avoid to be blocked by WD endpoint for too many requests in a short time 
                     res_people = return_sparql_query_results(query_people)
                     req += 1
 
@@ -715,7 +715,7 @@ class RelationExtractor(object):
                         if tok.pos_ == 'VERB':
                             lemma = tok.lemma_
                             best_syn = ['general influence', 0]
-                            for syn_a in self.lemma_synset:
+                            for syn_a in self.lemma_synset_map:
                                 for syn_b in wn.synsets(lemma, pos=wn.VERB):
                                     similarity = wn.lch_similarity(wn.synset(syn_a[1]), wn.synset(syn_b.name()))
                                     if similarity >= 2.5 and similarity >= best_syn[1]:
@@ -729,6 +729,8 @@ class RelationExtractor(object):
             if self.entities[cw]['fast-check'][ent][1] in {'Artist', 'Group'}:
                 if entity_relations[ent] not in {'general influence', 'influenced by', 'inspired by'}:
                     entity_relations[ent] = 'general influence'
+
+            print("\n\n", entity_relations, "\n\n")
         return self.entities
 
 
