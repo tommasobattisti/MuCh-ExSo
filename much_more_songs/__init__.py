@@ -496,54 +496,33 @@ class Scraper(object):
         return self.entities
     
 
-    def get_entity_type(self):
-        for cw in self.entities:
-            url = self.entities[cw]['wikipedia_url']
-            base_url = url.replace('https://en.wikipedia.org/wiki/', '')
-            db_query_ent_type = """
+    def get_musical_entity_type(self, query_url):
+        db_query_ent_type = """
             PREFIX dbo: <http://dbpedia.org/ontology/>
             PREFIX foaf: <http://xmlns.com/foaf/0.1/>
             PREFIX wikipedia-en: <http://en.wikipedia.org/wiki/>
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-            SELECT DISTINCT ?wikiLinks ?type
+            SELECT ?type
             WHERE { 
-                    VALUES ?type { dbo:MusicalWork dbo:Artwork dbo:Film dbo:TelevisionShow dbo:TelevisionSeason dbo:TelevisionEpisode dbo:Poem dbo:Book dbo:Comic dbo:Play}
-                    ?entity foaf:isPrimaryTopicOf wikipedia-en:"""+base_url+""";
+                    VALUES ?type { dbo:Album dbo:Song dbo:Single}
+                    ?entity foaf:isPrimaryTopicOf wikipedia-en:"""+query_url+""";
                             rdf:type ?type.
                     }
             """
-            sparql = SPARQLWrapper("http://dbpedia.org/sparql")
-            sparql.setReturnFormat(JSON)
-            sparql.setQuery(db_query_ent_type)
-            cw_type = sparql.query().convert()['results']['bindings'][0]['type']['value'].replace('http://dbpedia.org/ontology/', '')
-
-            if cw_type == 'MusicalWork':
-                db_query_ent_type = """
-                    PREFIX dbo: <http://dbpedia.org/ontology/>
-                    PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-                    PREFIX wikipedia-en: <http://en.wikipedia.org/wiki/>
-                    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-
-                    SELECT DISTINCT ?wikiLinks ?type
-                    WHERE { 
-                            VALUES ?type { dbo:Album dbo:Song dbo:Single}
-                            ?entity foaf:isPrimaryTopicOf wikipedia-en:"""+base_url+""";
-                                    rdf:type ?type.
-                            }
-                    """
-                sparql = SPARQLWrapper("http://dbpedia.org/sparql")
-                sparql.setReturnFormat(JSON)
-                sparql.setQuery(db_query_ent_type)
-                cw_type = sparql.query().convert()['results']['bindings'][0]['type']['value'].replace('http://dbpedia.org/ontology/', '')
-            self.entities[cw]['dbpedia-type'] = cw_type
-        return self.entities
+        sparql = SPARQLWrapper("http://dbpedia.org/sparql")
+        sparql.setReturnFormat(JSON)
+        sparql.setQuery(db_query_ent_type)
+        db_type = sparql.query().convert()['results']['bindings'][0]['type']['value'].replace('http://dbpedia.org/ontology/', '')
+        return db_type
+   
 
 
 
     def get_wiki_links(self):
         for cw in self.entities:
             url = self.entities[cw]['wikipedia_url']
-            base_url = url.replace('https://en.wikipedia.org/wiki/', '')
+            entity_url = url.replace('https://en.wikipedia.org/wiki/', '')
+            query_url = entity_url.replace('(', '\(').replace(')', '\)')
             db_query = """
             PREFIX dbo: <http://dbpedia.org/ontology/>
             PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
@@ -552,11 +531,12 @@ class Scraper(object):
             PREFIX schema: <http://schema.org/>
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             PREFIX xml: <http://www.w3.org/XML/1998/namespace>
-            SELECT DISTINCT ?wikiLinks ?type ?dbEntities ?label
+            SELECT DISTINCT ?wikiLinks ?type ?dbEntities ?label ?mainEntityType
             WHERE { 
                     VALUES ?type { dbo:Artist dbo:MusicalWork dbo:Artwork dbo:Film dbo:TelevisionShow dbo:TelevisionSeason dbo:TelevisionEpisode dbo:Poem dbo:Book dbo:Comic dbo:Play dbo:Group} #dbo:Person dbo:WrittenWork  dbo:RadioProgram 
-                    ?entity foaf:isPrimaryTopicOf wikipedia-en:"""+base_url+""";
-                            dbo:wikiPageWikiLink ?dbEntities.
+                    ?entity foaf:isPrimaryTopicOf wikipedia-en:"""+query_url+""";
+                            dbo:wikiPageWikiLink ?dbEntities;
+                            rdf:type ?mainEntityType .
                     ?dbEntities rdf:type ?type;
                             foaf:isPrimaryTopicOf ?wikiLinks;
                             rdfs:label ?label.
@@ -567,6 +547,11 @@ class Scraper(object):
             sparql.setReturnFormat(JSON)
             sparql.setQuery(db_query)
             db_res = sparql.query().convert()['results']['bindings']
+
+            db_type = db_res[0]['mainEntityType']['value'].replace('http://dbpedia.org/ontology/', '')
+            if db_type == 'MusicalWork':
+                db_type = self.get_musical_entity_type(query_url)
+            self.entities[cw]['dbpedia-type'] = db_type
             links = [i['wikiLinks']['value'].replace('http://en.wikipedia.org', '') for i in db_res]
             classes = [i['type']['value'].replace('http://dbpedia.org/ontology/', '') for i in db_res]
             db_uri = [i['dbEntities']['value'] for i in db_res]
@@ -620,7 +605,6 @@ class Scraper(object):
     def scrape(self):
         self.get_wikipedia_url()
         self.scrape_wikipedia_page()
-        self.get_entity_type()
         self.get_wiki_links()
         self.replace_entity_names()
         return self.entities
@@ -664,7 +648,8 @@ class RelationExtractor(object):
     def get_relations_bard(self):
         bard = Bard(token=self.GOOGLEBARD_TOKEN)
         for cw in self.entities:
-            bard_res = bard.get_answer("You are an expert in relation extraction from plain text and your aim is to identify the existing relations between the creative work '1984', which is the implicit subject of the text you will be fed with, and other ENTITIES that you will find in the text. ### Return the relationships between '"+cw+"' and the entities marked as 'Entity- ' in the text in the following format: subject | relation | "+cw+" as a pandas dataframe following this example: ```df = pd.DataFrame({'Entity': ['Entity-', 'Entity-', 'Entity-'], 'Relation': ['based on', 'derived from', 'inspired by'], '1984': '1984' })```. ### Text: "+self.entities[cw]['to_parse_txt'])
+            bard_res = bard.get_answer("You are an expert in relation extraction from plain text and your aim is to identify the existing relations between the creative work '"+cw+"', which is the implicit subject of the text you will be fed with, and other ENTITIES that you will find in the text. ### Return the relationships between '"+cw+"' and the entities marked as 'Entity- ' in the text in the following format: subject | relation | "+cw+" as a pandas dataframe following this example: ```df = pd.DataFrame({'Entity': ['Entity-', 'Entity-', 'Entity-'], 'Relation': ['based on', 'derived from', 'inspired by'], '"+cw+"': '"+cw+"' })```. ### Text: "+self.entities[cw]['to_parse_txt'])
+            print("\n\n\n\n", bard_res, "\n\n\n\n")
             out_list = bard_res['content'].replace('\n\n', ' ').replace('\n', ' ').replace('    ', ' ').replace('   ', ' ').replace('  ', ' ').split('```')
             for el in out_list:
                 if 'df = pd.DataFrame' in el:
