@@ -14,6 +14,9 @@ nlp = en_core_web_sm.load()
 load_dotenv()
 
 
+
+
+
 class SongDataCollector(object):
 
     SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
@@ -42,7 +45,7 @@ class SongDataCollector(object):
                 'client_id': self.SPOTIFY_CLIENT_ID,
                 'client_secret': self.SPOTIFY_CLIENT_SECRET,
                 }
-
+        
         response = requests.post('https://accounts.spotify.com/api/token', data=data).json()
         token_type = response['token_type']
         access_token = response['access_token']
@@ -66,6 +69,7 @@ class SongDataCollector(object):
         song['spotify-id'] = song_data['id']
         song['spotify-href'] = song_data['href']
         song['name'] = song_data['name']
+        song['album-name'] = song_data['album']['name']
         song['artists'] = []
         for artist in song_data['artists']:
             artist_dict = {}
@@ -144,7 +148,8 @@ class SongDataCollector(object):
             artist_dict = {}
             artist_dict['name'] = artist['artist']['name']
             artist_dict['mbz_id'] = artist['artist']['id']
-            artist_dict['disambiguation'] = artist['artist']['disambiguation']
+            if 'disambiguation' in artist['artist']:
+                artist_dict['disambiguation'] = artist['artist']['disambiguation']
             if artist_dict['mbz_id'] in artist_data:
                 wts = artist_data[artist_dict['mbz_id']]
                 artist_dict['type'] = wts['artist']['type']
@@ -172,53 +177,16 @@ class SongDataCollector(object):
 #_______________________________________________________
 #_______________________________________________________
 #_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
+
+
+
 
 class InformationExtractor(object):
-    def __init__(self, annotation_list):
+    def __init__(self, annotation_list, song_data):
         self.annotation_list = annotation_list
-
-    # FOLLOWS A MORE EFFICIENT VERSION THAT HOWEVER COUNTS ONLY ENTITIES RECOGNISED BY SPECY WITHOUT RESEARCHING THE STRINGS IN THE ANNOTATIONS AGAIN
-    """
-    import re
-    import spacy
-    from collections import defaultdict
-
-    class InformationExtractor(object):
-        def __init__(self, annotation_list):
-            self.annotation_list = annotation_list
-            self.nlp = spacy.load('en_core_web_sm')
-
-        def extract_information(self):
-            creative_works = defaultdict(lambda: {'count': 0, 'annotation_number': {}})
-            people = defaultdict(lambda: {'count': 0, 'annotation_number': {}})
-
-            for ann_num, annotation in enumerate(self.annotation_list):
-                doc = self.nlp(annotation[1])
-
-                for ent in doc.ents:
-                    ent_text = ent.text
-                    clean_ent_text = re.sub(r'[’\']s$', '', ent_text)
-                    if ent.label_ == 'WORK_OF_ART':
-                        if clean_ent_text not in creative_works:
-                            creative_works[clean_ent_text]['count'] = 0
-                        creative_works[clean_ent_text]['count'] += 1
-                        creative_works[clean_ent_text]['annotation_number'][ann_num] = creative_works[clean_ent_text].get(ann_num, 0) + 1
-
-                    if ent.label_ == 'PERSON':
-                        if clean_ent_text not in people:
-                            people[clean_ent_text]['count'] = 0
-                        people[clean_ent_text]['count'] += 1
-                        people[clean_ent_text]['annotation_number'][ann_num] = people[clean_ent_text].get(ann_num, 0) + 1
-
-                for person in list(people.keys()):
-                    last_word = person.split()[-1]
-                    occurrences = annotation[1].count(last_word)
-                    if occurrences > 0:
-                        people[person]['annotation_number'][ann_num] = people[person].get(ann_num, 0) + occurrences
-                        people[person]['count'] += occurrences
-
-            return dict(creative_works), dict(people)
-    """
+        self.song_data = song_data
     
     def get_entities(self):
         creative_works = {}
@@ -229,17 +197,19 @@ class InformationExtractor(object):
                 ent_text = ent.text
                 ent_sub_str = re.sub(r'[’\']s$', '', ent_text)
                 if ent.label_ == 'WORK_OF_ART':
-                    if ent_sub_str not in creative_works:
-                        creative_works[ent_sub_str] = {'count': 0, 'annotation_number': {}}
+                    if ent_sub_str not in {self.song_data['album-name'], self.song_data['name']}:
+                        if ent_sub_str not in creative_works:
+                            creative_works[ent_sub_str] = {'count': 0, 'annotation_number': {}}
                 if ent.label_ == 'PERSON':
-                    if ent_sub_str not in people:
-                        people[ent_sub_str] = {'count': 0, 'annotation_number': {}}
+                    if ent_sub_str not in {artist['name'] for artist in self.song_data['artists']}:
+                        if ent_sub_str not in people:
+                            people[ent_sub_str] = {'count': 0, 'annotation_number': {}}
         return creative_works, people
     
 
     def store_entities(self, creative_works, people):
         for ann_num, ann in enumerate(self.annotation_list):
-            clean_txt = re.sub(r'\W', ' ', ann[1]) #remove all the non alphanumeric characters
+            clean_txt = re.sub(r'[^A-Za-z0-9\'\’]', ' ', ann[1]) #remove all the non alphanumeric characters
             words = clean_txt.split(' ') #split the string into a list of words
 
             for cw in creative_works: #for every work of art in the dictionary
@@ -285,6 +255,13 @@ class InformationExtractor(object):
         return creative_works, people
     
 
+#_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
 
 
 
@@ -301,10 +278,10 @@ class CandidateExtractor(object):
             'type': 'item',
             'search': query # the query string
         }
-        
-        # query wd API    
         return requests.get(API_WD, params = params).json()
     
+
+
     def get_candidates(self):
         candidates = {}
         for cw in self.creative_works:
@@ -325,11 +302,19 @@ class CandidateExtractor(object):
                         entity['id'] = result['title']
                         entity['description'] = result['description']
                         candidates[cw].append(entity)
+            if candidates[cw] == []:
+                del candidates[cw]
         
         return candidates
 
-    
 
+#_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
 
 
 
@@ -349,10 +334,8 @@ class Disambiguator(object):
             relevance = len(self.candidates[cw])
 
             for idx, cand in enumerate(self.candidates[cw]):
-
                 cand['relevance'] = relevance 
                 relevance -= 1 #decrease for the next iteration
-
                 cand['dependency_score'] = 0  #this is the score that will be used to compute the dependency between candidates
                 cand['person_in_description'] = 0 #this is the number of times the person is mentioned in the description of the candidate
                 cand['person_in_wikidata'] = 0 #this is the number of times a person is mentioned in the wikidata page of the candidate
@@ -371,10 +354,8 @@ class Disambiguator(object):
                                         ?o rdfs:label ?label.
                                         FILTER (CONTAINS((?label), '"""+per_ts+"""'))
                                         }"""
-
                     if req % 5 == 0:
-                        time.sleep(5) # to avoid to be blocked by WD endpoint for too many requests in a short time
-                        
+                        time.sleep(5) # to avoid to be blocked by WD endpoint for too many requests in a short time   
                     res_people = return_sparql_query_results(query_people)
                     req += 1
 
@@ -382,7 +363,6 @@ class Disambiguator(object):
                         cand['person_in_wikidata'] += 1
 
                 #____________Second query____________
-
                 qs = "VALUES ?items { "      # this is the SPARQL query string to complete
                 for i in self.candidates[cw]:    # i repeat the loop since for every candidate i want to ask if it is dependent on at least one of the other candidates (meaning it's a derivative wor of another candidate)
                     if self.candidates[cw].index(i) == idx:
@@ -401,17 +381,14 @@ class Disambiguator(object):
                                                 ?items wdt:P4969 wd:"""+cand['id']+""".
                                             }
                                     }"""
-                
                 if req % 5 == 0:
                     time.sleep(5) # to avoid to be blocked by WD endpoint for too many requests in a short time
-
                 res_dependency = return_sparql_query_results(query_dependency)
                 req += 1
-
                 if res_dependency["boolean"] == True:
                     self.candidates[cw][idx]['dependency_score'] -= 1 # if the answer is true, it means that the candidate is dependent on at least one of the other candidates, so I decrease its dependency score
-        
         return self.candidates
+
 
 
     def get_clean_annotations(self):
@@ -428,10 +405,8 @@ class Disambiguator(object):
         to_embed = {}
         sents = self.get_clean_annotations()
         model = SentenceTransformer('all-mpnet-base-v2') 
-
         for cw in self.candidates:
             to_embed[cw] = []
-
             for s in sents:
                 if cw in s:
                     # ----- You can insert here code for defining a context window around the entity -----
@@ -440,19 +415,15 @@ class Disambiguator(object):
             for ent in self.candidates[cw]:
             #________Sentence embedding________ 
                 ent['description_embedding'] = model.encode(re.sub(cw, ' ', ent['description']), convert_to_tensor=True) # I remove the entity name from the description to avoid that the model learns to recognize the entity from the description itself
-
                 #________Averaging cosine similarities________
                 to_avg = [] # this is the list of cosine similarities between the entity description and the sentences containing the entity name
                 for emb in to_embed[cw]:
                     cos_sim = util.cos_sim(ent['description_embedding'], emb)
                     to_avg.append(cos_sim[0][0])
-
                 ent['similarity_score'] = round(float(sum(to_avg)/len(to_avg)), 4)
                 del ent['description_embedding']
-                
                 #________Final score________
                 ent['final_score'] = round(float(ent['dependency_score'] + ent['person_in_description'] + ent['person_in_wikidata'] + ent['similarity_score']), 4)
-
         return self.candidates
     
 
@@ -467,15 +438,21 @@ class Disambiguator(object):
 
     def disambiguate(self):
         self.candidates = self.assign_scores()
-        print("SCORES:", self.candidates)
+        print("\nSCORES:", self.candidates)
         self.candidates = self.get_sentence_similarity()
-        print("SIMILARITY:", self.candidates)
+        print("\nSIMILARITY:", self.candidates)
         self.candidates = self.get_final_candidates()
-        print("FINAL:", self.candidates)
+        print("\nFINAL:", self.candidates)
         return self.candidates
 
 
-
+#_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
 
 
 class Scraper(object):
@@ -490,22 +467,20 @@ class Scraper(object):
                             ?URL schema:about wd:"""+self.entities[cw]['id']+""".
                             ?URL schema:isPartOf <https://en.wikipedia.org/>.
                     }"""
-    
+
             res = return_sparql_query_results(query_string)
             value = res['results']['bindings'][0]['URL']['value']
             if value:
                 self.entities[cw]['wikipedia_url'] = value
     
+
     def scrape_wikipedia_page(self):
         for cw in self.entities:
             url = self.entities[cw]['wikipedia_url']
-
             page = requests.get(url)
             soup = BeautifulSoup(page.content, "html.parser").select('body')[0]
             spans = soup.find_all('span', string=[re.compile('^(Cultural)? [Ii]mpact$'), re.compile('^[Aa]daptations?')])
-
             h2_tags = [span.parent for span in spans if span.parent.name == 'h2']
-
             li_tags = []
             for h2 in h2_tags:
                 for el in h2.next_siblings:
@@ -513,24 +488,19 @@ class Scraper(object):
                         break
                     if el.name == 'ul':
                         li_tags.extend(el.find_all('li'))
-            
             self.entities[cw]['li_tags'] = li_tags
-
         return self.entities
     
-
 
     def get_entity_type(self):
         for cw in self.entities:
             url = self.entities[cw]['wikipedia_url']
             base_url = url.replace('https://en.wikipedia.org/wiki/', '')
-
             db_query_ent_type = """
             PREFIX dbo: <http://dbpedia.org/ontology/>
             PREFIX foaf: <http://xmlns.com/foaf/0.1/>
             PREFIX wikipedia-en: <http://en.wikipedia.org/wiki/>
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-
             SELECT DISTINCT ?wikiLinks ?type
             WHERE { 
                     VALUES ?type { dbo:MusicalWork dbo:Artwork dbo:Film dbo:TelevisionShow dbo:TelevisionSeason dbo:TelevisionEpisode dbo:Poem dbo:Book dbo:Comic dbo:Play}
@@ -541,7 +511,6 @@ class Scraper(object):
             sparql = SPARQLWrapper("http://dbpedia.org/sparql")
             sparql.setReturnFormat(JSON)
             sparql.setQuery(db_query_ent_type)
-            
             cw_type = sparql.query().convert()['results']['bindings'][0]['type']['value'].replace('http://dbpedia.org/ontology/', '')
 
             if cw_type == 'MusicalWork':
@@ -558,13 +527,10 @@ class Scraper(object):
                                     rdf:type ?type.
                             }
                     """
-
                 sparql = SPARQLWrapper("http://dbpedia.org/sparql")
                 sparql.setReturnFormat(JSON)
                 sparql.setQuery(db_query_ent_type)
-
                 cw_type = sparql.query().convert()['results']['bindings'][0]['type']['value'].replace('http://dbpedia.org/ontology/', '')
-            
             self.entities[cw]['dbpedia-type'] = cw_type
         return self.entities
 
@@ -574,7 +540,6 @@ class Scraper(object):
         for cw in self.entities:
             url = self.entities[cw]['wikipedia_url']
             base_url = url.replace('https://en.wikipedia.org/wiki/', '')
-
             db_query = """
             PREFIX dbo: <http://dbpedia.org/ontology/>
             PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
@@ -583,7 +548,6 @@ class Scraper(object):
             PREFIX schema: <http://schema.org/>
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             PREFIX xml: <http://www.w3.org/XML/1998/namespace>
-
             SELECT DISTINCT ?wikiLinks ?type ?dbEntities ?label
             WHERE { 
                     VALUES ?type { dbo:Artist dbo:MusicalWork dbo:Artwork dbo:Film dbo:TelevisionShow dbo:TelevisionSeason dbo:TelevisionEpisode dbo:Poem dbo:Book dbo:Comic dbo:Play dbo:Group} #dbo:Person dbo:WrittenWork  dbo:RadioProgram 
@@ -595,23 +559,19 @@ class Scraper(object):
                     FILTER(langMatches(lang(?label),"EN"))
                     }
             """
-
             sparql = SPARQLWrapper("http://dbpedia.org/sparql")
             sparql.setReturnFormat(JSON)
             sparql.setQuery(db_query)
-
             db_res = sparql.query().convert()['results']['bindings']
             links = [i['wikiLinks']['value'].replace('http://en.wikipedia.org', '') for i in db_res]
             classes = [i['type']['value'].replace('http://dbpedia.org/ontology/', '') for i in db_res]
             db_uri = [i['dbEntities']['value'] for i in db_res]
             label = [i['label']['value'] for i in db_res]
-
             wld = {}
             ent_id = 0
             for link in links:
                 for li in self.entities[cw]['li_tags']:
                     a_tags = li.find_all('a')
-
                     for a in a_tags:
                         href = a.get('href')
                         if href == link or urllib.parse.unquote(href) == link or re.sub(r'#.+', '', href) == link: #I use the unquote function to convert the %20 in the link to spaces
@@ -623,13 +583,11 @@ class Scraper(object):
                                 wld[ls]['text'].append(a.text)
             self.entities[cw]['wiki_links'] = wld
 
-        
         for cw in self.entities:
             fast_check = {}
             for k in self.entities[cw]['wiki_links']:
                 fast_check[self.entities[cw]['wiki_links'][k]['entity id']] = (self.entities[cw]['wiki_links'][k]['wikipedia link'] , self.entities[cw]['wiki_links'][k]['class'], self.entities[cw]['wiki_links'][k]['db_uri'], self.entities[cw]['wiki_links'][k]['label'])
             self.entities[cw]['fast-check'] = fast_check
-    
         return self.entities
 
 
@@ -637,13 +595,11 @@ class Scraper(object):
         for cw in self.entities:
             to_parse = []
             src_to_parse = [] #will be reused to store the source string in the final graph
-
             for li in self.entities[cw]['li_tags']:
                 str_li = str(li)
                 src_li = re.sub(r'<.+?>', '', str_li)
                 src_li = re.sub(r'\[[0-9]+\]', ' ', src_li)
                 src_to_parse.append(src_li)
-
                 for k in self.entities[cw]['wiki_links']:
                     if k in str_li:
                         str_li  = str_li.replace(k, self.entities[cw]['wiki_links'][k]['entity id'])
@@ -654,7 +610,6 @@ class Scraper(object):
             to_parse_txt = ' '.join(to_parse)
             self.entities[cw]['to_parse'] = to_parse
             self.entities[cw]['to_parse_txt'] = to_parse_txt
-
         return self.entities
     
 
@@ -667,8 +622,13 @@ class Scraper(object):
         return self.entities
 
 
-
-
+#_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
 
 
 
@@ -696,19 +656,17 @@ class RelationExtractor(object):
     def __init__(self, enties_dict):
         self.entities = enties_dict
     
+
     def get_relations_bard(self):
         bard = Bard(token=self.GOOGLEBARD_TOKEN)
         for cw in self.entities:
             bard_res = bard.get_answer("You are an expert in relation extraction from plain text and your aim is to identify the existing relations between the creative work '1984', which is the implicit subject of the text you will be fed with, and other ENTITIES that you will find in the text. ### Return the relationships between '"+cw+"' and the entities marked as 'Entity- ' in the text in the following format: subject | relation | "+cw+" as a pandas dataframe following this example: ```df = pd.DataFrame({'Entity': ['Entity-', 'Entity-', 'Entity-'], 'Relation': ['based on', 'derived from', 'inspired by'], '1984': '1984' })```. ### Text: "+self.entities[cw]['to_parse_txt'])
             out_list = bard_res['content'].replace('\n\n', ' ').replace('\n', ' ').replace('    ', ' ').replace('   ', ' ').replace('  ', ' ').split('```')
-
             for el in out_list:
                 if 'df = pd.DataFrame' in el:
                     df_idx = out_list.index(el)
-
             df_string = re.sub(r'(python)\s?import pandas as pd (.+)\s?\=', '', out_list[df_idx])
             df_string = re.sub(r'print\(.+\)', '', df_string).strip()
-
             self.entities[cw]['entity-relations'] = eval(df_string).to_dict()
         return self.entities
 
@@ -768,11 +726,9 @@ class RelationExtractor(object):
                         if entity_relations[ent] != 'general influence':
                             break
                     entity_relations[ent] = 'general influence'
-
             if self.entities[cw]['fast-check'][ent][1] in {'Artist', 'Group'}:
                 if entity_relations[ent] not in {'general influence', 'influenced by', 'inspired by'}:
                     entity_relations[ent] = 'general influence'
-        
         return self.entities
 
 
@@ -783,6 +739,14 @@ class RelationExtractor(object):
         self.disambiguate_relations()
         return self.entities
 
+
+#_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
+#_______________________________________________________
 
 
 class MuchMoreRunner(object):
@@ -797,8 +761,11 @@ class MuchMoreRunner(object):
         print(song_data)
 
         annotations = song_data['annotations']
-        ie = InformationExtractor(annotations)
+        ie = InformationExtractor(annotations, song_data)
+        
         creative_works, people = ie.extract_information()
+        if not creative_works:
+            return "\n\n-------------------\nNo creative work has been found to be extracted.\n-------------------\n\n"
         print('______INFORMATION EXTRACTOR______')
         print(creative_works, people)
 
