@@ -1,7 +1,7 @@
 from much_more_songs import *
 
-my_runner = MuchMoreRunner('26R3e7bjY6e9dlgghide8L', "get song data", 0.1)
-my_data = my_runner.run()
+my_runner = MuchMoreRunner()
+my_data = my_runner.run('26R3e7bjY6e9dlgghide8L', "get song data", 0.1)
 
 print(my_data)
 
