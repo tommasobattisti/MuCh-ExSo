@@ -739,13 +739,11 @@ class RelationExtractor(object):
 
 
 class MuchMoreRunner(object):
-    def __init__(self, song_id, user_agent, version):
-        self.song_id = song_id
-        self.user_agent = user_agent
-        self.version = version
+    def __init__(self):
+        pass
 
-    def run(self):
-        song_data = SongDataCollector(self.song_id).get_song_data(self.user_agent, self.version)
+    def run(self, song_id, user_agent, version):
+        song_data = SongDataCollector(song_id).get_song_data(user_agent, version)
         print('______SONG DATA______')
         print(song_data)
 
