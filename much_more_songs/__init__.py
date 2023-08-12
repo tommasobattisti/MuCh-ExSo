@@ -88,16 +88,10 @@ class SongDataCollector(object):
 # Genius API
 #_______________________________________________________
 
-    def get_genius_data(self, song_name, artist_name):
-        # Get song data from Genius API
-        genius = Genius(self.GENIUS_ACCESS_TOKEN)
-        return genius.search_song(song_name, artist_name)
-
-
 
     def save_genius_data(self, song_name, artist_name, store=dict()):
         genius = Genius(self.GENIUS_ACCESS_TOKEN)
-        genius_song = self.get_genius_data(song_name, artist_name)
+        genius_song = genius.search_song(song_name, artist_name)
         genius_id = genius_song.id
 
         store['genius_id'] = genius_id
