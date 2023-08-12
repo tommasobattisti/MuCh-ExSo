@@ -24,6 +24,8 @@ class SongDataCollector(object):
     GENIUS_ACCESS_TOKEN = os.getenv('GENIUS_ACCESS_TOKEN')
     MUSICBRAINZ_USER = os.getenv('MUSICBRAINZ_USER')
     MUSICBRAINZ_TOKEN = os.getenv('MUSICBRAINZ_TOKEN')
+    MBZ_USER_AGENT = "MucH-EX"
+    MBZ_APP_VERSION = "0.1"
 
 
     def __init__(self, spotify_id):
@@ -114,35 +116,35 @@ class SongDataCollector(object):
 # MusicBrainz API
 #_______________________________________________________ 
 
-    def get_musicbrainz_song(self, user_agent, version, isrc, auth=False):
+    def get_musicbrainz_song(self, isrc, auth=False):
         # Get song data from MusicBrainz API
         if auth:
-            mbz.set_useragent(user_agent, version)
+            mbz.set_useragent(self.MBZ_USER_AGENT, self.MBZ_APP_VERSION)
             mbz.auth(self.MUSICBRAINZ_USER, self.MUSICBRAINZ_TOKEN)
         mbz_song = mbz.get_recordings_by_isrc(isrc)
         return mbz.get_recording_by_id(mbz_song['isrc']['recording-list'][0]['id'], includes=['artists'])
     
 
-    def get_musicbrainz_artist(self, user_agent, version, art_id, auth=False):
+    def get_musicbrainz_artist(self, art_id, auth=False):
         # Get artist data from MusicBrainz API
         if auth:
-            mbz.set_useragent(user_agent, version)
+            mbz.set_useragent(self.MBZ_USER_AGENT, self.MBZ_APP_VERSION)
             mbz.auth(self.MUSICBRAINZ_USER, self.MUSICBRAINZ_TOKEN)
         return mbz.get_artist_by_id(art_id, includes=["url-rels", "tags"])
 
     
-    def save_musicbrainz_data(self, user_agent, version, isrc, store=dict()):
+    def save_musicbrainz_data(self, isrc, store=dict()):
         # Save song data from MusicBrainz API
-        mbz.set_useragent(user_agent, version)
+        mbz.set_useragent(self.MBZ_USER_AGENT, self.MBZ_APP_VERSION)
         mbz.auth(self.MUSICBRAINZ_USER, self.MUSICBRAINZ_TOKEN)
 
-        mbz_song = self.get_musicbrainz_song(user_agent, version, isrc)
+        mbz_song = self.get_musicbrainz_song(isrc)
         print(mbz_song)
         artist_ids = [artist['artist']['id'] for artist in mbz_song['recording']['artist-credit']]
         artist_data = {}
         for artist_id in artist_ids:
             if artist_id not in artist_data:
-                artist_data[artist_id] = self.get_musicbrainz_artist(user_agent, version, artist_id)
+                artist_data[artist_id] = self.get_musicbrainz_artist(artist_id)
         store['artists'] = []
         for artist in mbz_song['recording']['artist-credit']:
             artist_dict = {}
@@ -164,11 +166,11 @@ class SongDataCollector(object):
 # Get all data
 #_______________________________________________________
 
-    def get_song_data(self, mbz_user_agent, mbz_app_version):
+    def get_song_data(self):
         # Get song data from all APIs
         song_data = self.save_spotify_data()
         song_data = self.save_genius_data(song_data['name'], song_data['artists'][0]['name'], song_data)
-        song_data = self.save_musicbrainz_data(mbz_user_agent, mbz_app_version, song_data['isrc'], song_data)
+        song_data = self.save_musicbrainz_data(song_data['isrc'], song_data)
         return song_data
 
 
@@ -742,8 +744,8 @@ class MuchMoreRunner(object):
     def __init__(self):
         pass
 
-    def run(self, song_id, user_agent, version):
-        song_data = SongDataCollector(song_id).get_song_data(user_agent, version)
+    def run(self, song_id):
+        song_data = SongDataCollector(song_id).get_song_data()
         print('______SONG DATA______')
         print(song_data)
 
