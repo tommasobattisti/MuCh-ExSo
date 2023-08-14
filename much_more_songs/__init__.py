@@ -343,7 +343,7 @@ class Disambiguator(object):
                 for per in people_list:
                     per_split = per[0].split(' ')
                     if len(per_split) > 1:
-                        per_ts = per_split[-1]  #take the last token of the person name [SI PUO' FARE MEGLIO INCLODENDO TUTTI I TOKEN DELLA PERSONA IN UN CICLO FOR E VEDERE SE SONO TUTTI IN DESCRIPTION ECC.]
+                        per_ts = per_split[-1]  #take the last token of the person name
                     else:
                         per_ts = per[0]
 
