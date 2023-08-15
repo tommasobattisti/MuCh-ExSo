@@ -482,7 +482,7 @@ class Scraper(object):
             url = self.entities[cw]['wikipedia_url']
             page = requests.get(url)
             soup = BeautifulSoup(page.content, "html.parser").select('body')[0]
-            spans = soup.find_all('span', string=[re.compile('^(Cultural)? [Ii]mpact$'), re.compile('^[Aa]daptations?')])
+            spans = soup.find_all('span', string=[re.compile('^(Cultural)?\s?[Ii]mpact$'), re.compile('^[Aa]daptations?')])
             h2_tags = [span.parent for span in spans if span.parent.name == 'h2']
             li_tags = []
             for h2 in h2_tags:
