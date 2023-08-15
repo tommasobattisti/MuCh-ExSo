@@ -758,16 +758,16 @@ class MuchMoreRunner(object):
         print(candidates)
 
         disambiguator = Disambiguator(people, candidates, annotations)
-        candidates = disambiguator.disambiguate()
+        entities = disambiguator.disambiguate()
         print('______DISAMBIGUATOR______')
-        print(candidates)
+        print(entities)
 
-        scraper = Scraper(disambiguator.candidates)
+        scraper = Scraper(entities)
         scraped = scraper.scrape()
         print('______SCRAPER______')
         print(scraped)
 
-        re = RelationExtractor(scraper.entities)
+        re = RelationExtractor(scraped)
         x = re.extract_relations()
         print('______RELATION EXTRACTOR______')
         print(x)
