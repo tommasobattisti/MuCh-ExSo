@@ -472,6 +472,9 @@ class Scraper(object):
             value = res['results']['bindings'][0]['URL']['value']
             if value:
                 self.entities[cw]['wikipedia_url'] = value
+        return self.entities
+        
+        
     
 
     def scrape_wikipedia_page(self):
