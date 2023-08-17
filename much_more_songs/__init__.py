@@ -712,24 +712,26 @@ class RelationExtractor(object):
                     if re.search(regex, relation_text):
                         entity_relations[ent] = relation_label
                         break
-                else:
-                    pos = nlp(entity_relations[ent])
-                    for tok in pos:
-                        if tok.pos_ == 'VERB':
-                            lemma = tok.lemma_
-                            best_syn = ['general influence', 0]
-                            for syn_a in self.lemma_synset_map:
-                                for syn_b in wn.synsets(lemma, pos=wn.VERB):
-                                    similarity = wn.lch_similarity(wn.synset(syn_a[1]), wn.synset(syn_b.name()))
-                                    if similarity >= 2.5 and similarity >= best_syn[1]:
-                                        best_syn = [syn_a[2], similarity]
-                            entity_relations[ent] = best_syn[0]
-                        else:
-                            entity_relations[ent] = 'general influence'
-                        if entity_relations[ent] != 'general influence':
-                            break
-                    entity_relations[ent] = 'general influence'
-            self.entities = self.adjust_relations_to_type(self.entities)
+                    else:
+                        pos = nlp(entity_relations[ent])
+                        for tok in pos:
+                            if tok.pos_ == 'VERB':
+                                lemma = tok.lemma_
+                                best_syn = ['general influence', 0]
+                                for syn_a in self.lemma_synset_map:
+                                    for syn_b in wn.synsets(lemma, pos=wn.VERB):
+                                        similarity = wn.lch_similarity(wn.synset(syn_a[1]), wn.synset(syn_b.name()))
+                                        if similarity >= 2.5 and similarity >= best_syn[1]:
+                                            best_syn = [syn_a[2], similarity]
+                                entity_relations[ent] = best_syn[0]
+                            else:
+                                entity_relations[ent] = 'general influence'
+
+                            if entity_relations[ent] != 'general influence':
+                                break
+                        entity_relations[ent] = 'general influence'
+
+        self.entities = self.adjust_relations_to_type(self.entities)
         return self.entities
             
 
