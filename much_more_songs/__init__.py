@@ -739,7 +739,7 @@ class RelationExtractor(object):
 #_______________________________________
 #_______________________________________
 
-    def store_relations_rb(self, rel_sent, relations):
+    def store_relations_rb(self, rel_sent, relations): 
         if len(rel_sent) == 1: #if there is only one sentence in the list
             for k in rel_sent: #for every dictionary in the list
                 if len(k['entities']) > 0: #if the dictionary contains at least one entity
@@ -769,6 +769,8 @@ class RelationExtractor(object):
                 else: #if the dictionary does not contain at least one entity
                     continue #the previous step should be able to handle this case too
         
+        return relations
+        
 
     def get_relations_rb(self):
         for cw in self.entities:
@@ -781,7 +783,7 @@ class RelationExtractor(object):
                 if s_idx + 1 == len(self.entities[cw]['to_parse']): # if the sentence is the last one
                     last = True # set the boolean to true 
 
-                self.store_relations_rb(rel_sent, relations) # call the function to store the relations in the dictionary
+                relations = self.store_relations_rb(rel_sent, relations) # call the function to store the relations in the dictionary
                             
                 doc = nlp(s) #create a spacy doc from the sentence
                 rel_sent = [] #reset the list of dictionaries
@@ -842,7 +844,7 @@ class RelationExtractor(object):
                         rel_sent.append(ev_dict) #add the dictionary to the list of dictionaries
 
                 if last: #if it is the last sentence
-                    self.store_relations_rb(rel_sent, relations) #call the function to store the relations in the dictionary
+                    relations = self.store_relations_rb(rel_sent, relations) #call the function to store the relations in the dictionary
 
         for ent in relations:
             if type(relations[ent]) == list :
