@@ -583,7 +583,7 @@ class Scraper(object):
         for cw in self.entities:
             to_parse = []
             src_to_parse = [] #will be reused to store the source string in the final graph
-            for li in self.entities[cw]['li_tags']:
+            for li in self.entities[cw]['li_tags']: 
                 str_li = str(li)
                 src_li = re.sub(r'<.+?>', '', str_li)
                 src_li = re.sub(r'\[[0-9]+\]', ' ', src_li)
@@ -593,7 +593,7 @@ class Scraper(object):
                         str_li  = str_li.replace(k, self.entities[cw]['wiki_links'][k]['entity id'])
                         
                 str_li = re.sub(r'<.+?>', '', str_li)
-                str_li = re.sub(r'\[[0-9]+\]', ' ', str_li) #remove the numbers in square brackets (wikidata references)
+                str_li = re.sub(r'\[[0-9]+\]', ' ', str_li) #remove the numbers in square brackets (wikipedia references)
                 to_parse.append(str_li)
             to_parse_txt = ' '.join(to_parse)
             self.entities[cw]['to_parse'] = to_parse
@@ -642,7 +642,22 @@ class RelationExtractor(object):
 
     def __init__(self, enties_dict):
         self.entities = enties_dict
+
     
+
+    def adjust_relations_to_type(self, entities):
+        for cw in entities:
+            entity_relations = entities[cw]['entity-relations']
+            for ent in entity_relations:
+                if entities[cw]['fast-check'][ent][1] in {'Artist', 'Group'}:
+                    if entity_relations[ent] not in {'general influence', 'influenced by', 'inspired by'}:
+                        entity_relations[ent] = 'general influence'
+        return entities
+    
+
+#Google Bard approach
+#_______________________________________
+#_______________________________________
 
     def get_relations_bard(self):
         bard = Bard(token=self.GOOGLEBARD_TOKEN)
@@ -684,13 +699,13 @@ class RelationExtractor(object):
                         for e in self.entities[cw]['entity-groups'][group]:
                             if e not in df['Entity'].values:
                                 entity_relation[e] = relation
-            self.entities[cw]['entity-relation'] = entity_relation
+            self.entities[cw]['entity-relations'] = entity_relation
         return self.entities
     
 
     def disambiguate_relations(self):
         for cw in self.entities:
-            entity_relations = self.entities[cw]['entity-relation']
+            entity_relations = self.entities[cw]['entity-relations']
             for ent in entity_relations:
                 relation_text = entity_relations[ent]
                 for regex, relation_label in self.entity_relation_map.items():
@@ -714,17 +729,145 @@ class RelationExtractor(object):
                         if entity_relations[ent] != 'general influence':
                             break
                     entity_relations[ent] = 'general influence'
-            if self.entities[cw]['fast-check'][ent][1] in {'Artist', 'Group'}:
-                if entity_relations[ent] not in {'general influence', 'influenced by', 'inspired by'}:
-                    entity_relations[ent] = 'general influence'
+            self.entities = self.adjust_relations_to_type(self.entities)
         return self.entities
+            
+
+#RB approach
+#_______________________________________
+#_______________________________________
+
+    def store_relations_rb(self, rel_sent, relations):
+        if len(rel_sent) == 1: #if there is only one sentence in the list
+            for k in rel_sent: #for every dictionary in the list
+                if len(k['entities']) > 0: #if the dictionary contains at least one entity
+                    if len(k['verbs']) == 1: #if the dictionary contains only one verb
+                        for ent in k['entities']: #for every entity in the dictionary
+                            relations[ent] = k['verbs'][0] #add the verb to the dictionary of relations
+                    elif len(k['verbs']) == 0: #if the dictionary contains no verbs
+                        for ent in k['entities']: #for every entity in the dictionary
+                            relations[ent] = 'general influence' #add the general relation to the dictionary of relations
+        elif len(rel_sent) > 1: #if there is more than one sentence in the list
+            for k in rel_sent: #for every dictionary in the list of dictionaries
+                idx = rel_sent.index(k) #get the index of the dictionary in the list
+                if len(k['entities']) > 0: #if the dictionary contains at least one entity
+                    if len(k['verbs']) == 1: #if the dictionary contains only one verb 
+                        for ent in k['entities']: #for every entity in the dictionary
+                            relations[ent] = k['verbs'][0] #add the verb to the dictionary of relations 
+                    elif len(k['verbs']) == 0 and idx+1 < len(rel_sent): #if the dictionary contains no verbs and the index is not the last one
+                        if (len(rel_sent[idx+1]['entities']) > 0 and rel_sent[idx]['entities'] == rel_sent[idx+1]['entities'] and len(rel_sent[idx+1]['verbs']) == 1) or (len(rel_sent[idx+1]['entities']) == 0 and len(rel_sent[idx+1]['verbs']) == 1): #if the next dictionary contains at least one entity and the entities are the same as the previous dictionary and the next dictionary contains only one verb or if the next dictionary contains no entities and only one verb
+                            for ent in k['entities']: #for every entity in the dictionary 
+                                relations[ent] = rel_sent[idx+1]['verbs'][0] #add the verb of the next dictionary to the dictionary of relations 
+                        else: #if the next dictionary does not contain at least one entity or the entities are not the same as the previous dictionary or the next dictionary contains more than one verb
+                            for ent in k['entities']: #for every entity in the dictionary
+                                relations[ent] = 'general influence' #add the general relation to the dictionary of relations
+                    else:
+                        for ent in k['entities']: #for every entity in the dictionary
+                            relations[ent] = k['verbs'] #add the verbs to the dictionary of relations
+                else: #if the dictionary does not contain at least one entity
+                    continue #the previous step should be able to handle this case too
+        
+
+    def get_relations_rb(self):
+        for cw in self.entities:
+            rel_sent = []
+            relations = {}
+            last = False
+
+            for s in self.entities[cw]['to_parse']: # for every sentence in the list of sentences containing the entity
+                s_idx = self.entities[cw]['to_parse'].index(s) # get the index of the sentence in the list
+                if s_idx + 1 == len(self.entities[cw]['to_parse']): # if the sentence is the last one
+                    last = True # set the boolean to true 
+
+                self.store_relations_rb(rel_sent, relations) # call the function to store the relations in the dictionary
+                            
+                doc = nlp(s) #create a spacy doc from the sentence
+                rel_sent = [] #reset the list of dictionaries
+
+                for sent in doc.sents: #for every sentence in the doc (in case the sentence is a complex sentence)
+                    cand_ent = set() #set of candidate entities in the sentence
+                    cand_verbs = set() #set of candidate verbs in the sentence 
+                    current_verb = '' #string to store the current verb
+                    lemma = '' #string to store the lemma of the current verb
+                    next_tok = False # boolean to check if it is necessary to check the next token 
+                    for token in sent: #for every token in the sentence 
+                        #print(token.text, token.pos_, token.dep_)
+                        if token.text in self.entities[cw]['fast-check']: #if the token is an entity found in the wikipedia page
+                            cand_ent.add(token.text) #add the entity to the set of candidate entities 
+                        elif token.pos_ == 'VERB' and token.lemma_ not in {"be", "have", "do"}: #if the token is a verb
+                            current_verb = token.text #store the verb in the string of the current verb
+                            lemma = token.lemma_ #store the lemma of the verb in the string of the lemma
+                            next_tok = True #set the boolean to true to check the next token
+                        else:
+                            if next_tok: #if it is a "next token"
+                                if token.dep_ == 'prep' or token.dep_ == 'agent': #if the token is a preposition or an agent 
+                                    next_tok = False #set the boolean to false 
+                                    current_verb += ' ' + token.text #add the token to the string of the current verb
+                                    cand_verbs.add((current_verb, lemma)) #add the tuple of the current verb and its lemma to the set of candidate verbs
+                                    current_verb = '' #reset the string of the current verb
+                                else:
+                                    next_tok = False #set the boolean to false
+                                    cand_verbs.add((current_verb, lemma)) #add the tuple of the current verb and its lemma to the set of candidate verbs
+                                    current_verb = '' #reset the string of the current verb
+
+                    if cand_verbs: #if the set of candidate verbs is not empty
+                        sel_ve = [] #list of selected verbs 
+                        for tup in cand_verbs: #for every tuple in the set of candidate verbs
+                            assigned = False
+                            for regex, relation_label in self.entity_relation_map.items(): 
+                                    if re.search(regex, tup[0]):
+                                        sel_ve.append((tup[0], relation_label))
+                                        assigned = True 
+                                        break
+                            if not assigned:
+                                if re.match(r'based\son|(inspired|influenced)(\sby)?|(derive[ds]?|adapted)(\sfrom)?|(reference|mention)(s|ed\s(by|in)?)?|alludes?\sto|quote[sd]?', tup[0]): #if the verb matches one of the regular expressions
+                                    sel_ve.append(tup) #add the tuple to the list of selected verbs
+                                else:
+                                    sel_ve.append((tup[0], 'general influence')) #add the tuple of the verb and the general influence to the list of selected verbs
+
+                    if cand_ent or sel_ve: #if the set of candidate entities or the list of selected verbs is not empty
+                        ev_dict = {'entities': [], 'verbs': []} #create a dictionary to store the entities and the verbs
+
+                        for ent in cand_ent: #for every entity in the set of candidate entities
+                            if ent not in ev_dict['entities']: #if the entity is not already in the dictionary
+                                ev_dict['entities'].append(ent) #add the entity to the dictionary
+
+                        
+                        for verb in sel_ve: #for every tuple in the list of selected verbs
+                            if verb[1] not in ev_dict['verbs']: #if the lemma of the verb is not already in the dictionary
+                                ev_dict['verbs'].append(verb[1]) #add the lemma of the verb to the dictionary
+                    
+                        rel_sent.append(ev_dict) #add the dictionary to the list of dictionaries
+
+                if last: #if it is the last sentence
+                    self.store_relations_rb(rel_sent, relations) #call the function to store the relations in the dictionary
+
+        for ent in relations:
+            if type(relations[ent]) == list :
+                if len(relations[ent]) > 1 and 'general influence' in relations[ent]:
+                    relations[ent].remove('general influence')
+                relations[ent] = relations[ent][0]
+            for lemma_rel in self.lemma_synset_map:
+                if lemma_rel[0] == relations[ent]:
+                    relations[ent] = lemma_rel[2]
+        
+        self.entities[cw]['entity-relations'] = relations
+        self.entities = self.adjust_relations_to_type(self.entities)
+
+        return self.entities
+
+
 
 
     def extract_relations(self):
-        self.get_relations_bard()
-        self.group_entities()
-        self.assign_missing_relations()
-        self.disambiguate_relations()
+        try:
+            self.get_relations_bard()
+            self.group_entities()
+            self.assign_missing_relations()
+            self.disambiguate_relations()
+        except:
+            self.get_relations_rb()
+
         return self.entities
 
 
@@ -735,6 +878,10 @@ class RelationExtractor(object):
 #_______________________________________________________
 #_______________________________________________________
 #_______________________________________________________
+
+                    
+
+
 
 
 class MuchMoreRunner(object):
@@ -769,6 +916,8 @@ class MuchMoreRunner(object):
         scraped = scraper.scrape()
         print('______SCRAPER______')
         print(scraped)
+
+
 
         re = RelationExtractor(scraped)
         x = re.extract_relations()
