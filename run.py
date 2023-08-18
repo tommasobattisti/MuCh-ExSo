@@ -1,6 +1,6 @@
 from much_more_songs import *
 
-my_runner = MuchMoreRunner()
+my_runner = MuchEx()
 my_data = my_runner.run('26R3e7bjY6e9dlgghide8L')
 
 print(my_data)
