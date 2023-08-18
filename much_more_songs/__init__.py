@@ -888,7 +888,7 @@ class RelationExtractor(object):
 
 
 
-class MuchMoreRunner(object):
+class MuchEx(object):
     def __init__(self):
         pass
 
