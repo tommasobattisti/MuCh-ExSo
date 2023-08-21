@@ -1,0 +1,378 @@
+@prefix ns1: <https://w3id.org/polifonia/ontology/music-meta/> .
+@prefix ns2: <https://raw.githubusercontent.com/tommasobattisti/MuCH-O/main/ontology/mucho.owl#> .
+@prefix ns3: <https://w3id.org/polifonia/ontology/core/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://dbpedia.org/resource/1984_(advertisement)> a ns2:AudiovisualEntity ;
+    rdfs:label "1984 (advertisement)"^^xsd:string ;
+    ns2:qualifiedReference [ a ns2:Reference ;
+            prov:entity <https://www.wikidata.org/wiki/Q208460> ;
+            ns2:influenceInformationSource "https://en.wikipedia.org/wiki/Nineteen_Eighty-Four"^^xsd:anyURI ;
+            ns2:influenceSourceText "In 1984, Ridley Scott directed a television commercial, \"1984\", to launch Apple's Macintosh computer. The advert stated, \"1984 won't be like 1984\", suggesting that the Apple Mac would be freedom from Big Brother, i.e., the IBM PC. "^^xsd:string ] ;
+    ns2:references <https://www.wikidata.org/wiki/Q208460> ;
+    ns3:title "1984 (advertisement)"^^xsd:string .
+
+<http://dbpedia.org/resource/2_+_2_=_5_(song)> a ns2:Song ;
+    rdfs:label "2 + 2 = 5 (song)"^^xsd:string ;
+    prov:qualifiedInfluence [ a prov:EntityInfluence ;
+            prov:entity <https://www.wikidata.org/wiki/Q208460> ;
+            ns2:influenceInformationSource "https://en.wikipedia.org/wiki/Nineteen_Eighty-Four"^^xsd:anyURI ;
+            ns2:influenceSourceText "Radiohead's 2003 single \"2 + 2 = 5\", from their album Hail to the Thief, is Orwellian by title and content. Thom Yorke states, \"I was listening to a lot of political programs on BBC Radio 4. I found myself writing down little nonsense phrases, those Orwellian euphemisms that [the British and American governments] are so fond of. They became the background of the record.\" "^^xsd:string ] ;
+    prov:wasInfluencedBy <https://www.wikidata.org/wiki/Q208460> ;
+    ns3:title "2 + 2 = 5 (song)"^^xsd:string .
+
+<http://dbpedia.org/resource/Chain_of_Command_(Star_Trek:_The_Next_Generation)> a ns2:AudiovisualEntity ;
+    rdfs:label "Chain of Command (Star Trek: The Next Generation)"^^xsd:string ;
+    prov:qualifiedInfluence [ a prov:EntityInfluence ;
+            prov:entity <https://www.wikidata.org/wiki/Q208460> ;
+            ns2:influenceInformationSource "https://en.wikipedia.org/wiki/Nineteen_Eighty-Four"^^xsd:anyURI ;
+            ns2:influenceSourceText "The two part episode Chain of Command on Star Trek: The Next Generation bears some resemblances to the novel. "^^xsd:string ] ;
+    prov:wasInfluencedBy <https://www.wikidata.org/wiki/Q208460> ;
+    ns3:title "Chain of Command (Star Trek: The Next Generation)"^^xsd:string .
+
+<http://dbpedia.org/resource/Diamond_Dogs> a ns2:MusicAlbum ;
+    rdfs:label "Diamond Dogs"^^xsd:string ;
+    prov:qualifiedInfluence [ a prov:EntityInfluence ;
+            prov:entity <https://www.wikidata.org/wiki/Q208460> ;
+            ns2:influenceInformationSource "https://en.wikipedia.org/wiki/Nineteen_Eighty-Four"^^xsd:anyURI ;
+            ns2:influenceSourceText "In 1974, David Bowie released the album Diamond Dogs, which is thought to be loosely based on the novel Nineteen Eighty-Four. It includes the tracks \"We Are The Dead\", \"1984\" and \"Big Brother\". Before the album was made, Bowie's management (MainMan) had planned for Bowie and Tony Ingrassia (MainMan's creative consultant) to co-write and direct a musical production of Orwell's Nineteen Eighty-Four, but Orwell's widow refused to give MainMan the rights. "^^xsd:string ] ;
+    prov:wasInfluencedBy <https://www.wikidata.org/wiki/Q208460> ;
+    ns3:title "Diamond Dogs"^^xsd:string .
+
+<http://dbpedia.org/resource/Doctor_Who> a ns2:AudiovisualEntity ;
+    rdfs:label "Doctor Who"^^xsd:string ;
+    ns2:cites <https://www.wikidata.org/wiki/Q208460> ;
+    ns2:qualifiedCitation [ a ns2:Citation ;
+            prov:entity <https://www.wikidata.org/wiki/Q208460> ;
+            ns2:influenceInformationSource "https://en.wikipedia.org/wiki/Nineteen_Eighty-Four"^^xsd:anyURI ;
+            ns2:influenceSourceText "An episode of Doctor Who, called \"The God Complex\", depicts an alien ship disguised as a hotel containing Room 101-like spaces, and quotes the nursery rhyme as well. "^^xsd:string ] ;
+    ns3:title "Doctor Who"^^xsd:string .
+
+<http://dbpedia.org/resource/Eric_Sykes> rdfs:label "Eric Sykes"^^xsd:string ;
+    ns2:isBasedOn <https://www.wikidata.org/wiki/Q208460> ;
+    ns2:qualifiedBasis [ a ns2:Basis ;
+            prov:entity <https://www.wikidata.org/wiki/Q208460> ;
+            ns2:influenceInformationSource "https://en.wikipedia.org/wiki/Nineteen_Eighty-Four"^^xsd:anyURI ;
+            ns2:influenceSourceText "In 1955, an episode of BBC's The Goon Show, 1985, was broadcast, written by Spike Milligan and Eric Sykes and based on Nigel Kneale's television adaptation. It was re-recorded about a month later with the same script but a slightly different cast. 1985 parodies many of the main scenes in Orwell's novel."^^xsd:string ] .
+
+<http://dbpedia.org/resource/Hail_to_the_Thief> a ns2:MusicAlbum ;
+    rdfs:label "Hail to the Thief"^^xsd:string ;
+    prov:qualifiedInfluence [ a prov:EntityInfluence ;
+            prov:entity <https://www.wikidata.org/wiki/Q208460> ;
+            ns2:influenceInformationSource "https://en.wikipedia.org/wiki/Nineteen_Eighty-Four"^^xsd:anyURI ;
+            ns2:influenceSourceText "Radiohead's 2003 single \"2 + 2 = 5\", from their album Hail to the Thief, is Orwellian by title and content. Thom Yorke states, \"I was listening to a lot of political programs on BBC Radio 4. I found myself writing down little nonsense phrases, those Orwellian euphemisms that [the British and American governments] are so fond of. They became the background of the record.\" "^^xsd:string ] ;
+    prov:wasInfluencedBy <https://www.wikidata.org/wiki/Q208460> ;
+    ns3:title "Hail to the Thief"^^xsd:string .
+
+<http://dbpedia.org/resource/Hugh_Hopper> rdfs:label "Hugh Hopper"^^xsd:string ;
+    prov:qualifiedDerivation [ a prov:Derivation ;
+            prov:entity <https://www.wikidata.org/wiki/Q208460> ;
+            ns2:influenceInformationSource "https://en.wikipedia.org/wiki/Nineteen_Eighty-Four"^^xsd:anyURI ;
+            ns2:influenceSourceText "In 1973, ex-Soft Machine bassist Hugh Hopper released an album called 1984 on the Columbia label (UK), consisting of instrumentals with Orwellian titles such as \"Miniluv\", \"Minipax\", \"Minitrue\", and so forth."^^xsd:string ] ;
+    prov:wasDerivedFrom <https://www.wikidata.org/wiki/Q208460> .
+
+<http://dbpedia.org/resource/Muse_(band)> a ns2:Group ;
+    rdfs:label "Muse (band)"^^xsd:string ;
+    prov:qualifiedInfluence [ a prov:EntityInfluence ;
+            prov:entity <https://www.wikidata.org/wiki/Q208460> ;
+            ns2:influenceInformationSource "https://en.wikipedia.org/wiki/Nineteen_Eighty-Four"^^xsd:anyURI ;
+            ns2:influenceSourceText "In September 2009, the English progressive rock band Muse released The Resistance, which included songs influenced by Nineteen Eighty-Four. "^^xsd:string ] ;
+    prov:wasInfluencedBy <https://www.wikidata.org/wiki/Q208460> ;
+    ns3:name "Muse (band)"^^xsd:string .
+
+<http://dbpedia.org/resource/Oranges_and_Lemons> a ns2:Song ;
+    rdfs:label "Oranges and Lemons"^^xsd:string ;
+    ns2:cites <https://www.wikidata.org/wiki/Q208460> ;
+    ns2:qualifiedCitation [ a ns2:Citation ;
+            prov:entity <https://www.wikidata.org/wiki/Q208460> ;
+            ns2:influenceInformationSource "https://en.wikipedia.org/wiki/Nineteen_Eighty-Four"^^xsd:anyURI ;
+            ns2:influenceSourceText "An episode of Doctor Who, called \"The God Complex\", depicts an alien ship disguised as a hotel containing Room 101-like spaces, and quotes the nursery rhyme as well. "^^xsd:string ] ;
+    ns3:title "Oranges and Lemons"^^xsd:string .
+
+<http://dbpedia.org/resource/Paul_Weller> rdfs:label "Paul Weller"^^xsd:string ;
+    ns2:qualifiedReference [ a ns2:Reference ;
+            prov:entity <https://www.wikidata.org/wiki/Q208460> ;
+            ns2:influenceInformationSource "https://en.wikipedia.org/wiki/Nineteen_Eighty-Four"^^xsd:anyURI ;
+            ns2:influenceSourceText "In 1977, the British rock band The Jam released the album This Is the Modern World, which includes the track \"Standards\" by Paul Weller. This track concludes with the lyrics \"...and ignorance is strength, we have God on our side, look, you know what happened to Winston.\" "^^xsd:string ] ;
+    ns2:references <https://www.wikidata.org/wiki/Q208460> .
+
+<http://dbpedia.org/resource/Radiohead> a ns2:Group ;
+    rdfs:label "Radiohead"^^xsd:string ;
+    prov:qualifiedInfluence [ a prov:EntityInfluence ;
+            prov:entity <https://www.wikidata.org/wiki/Q208460> ;
+            ns2:influenceInformationSource "https://en.wikipedia.org/wiki/Nineteen_Eighty-Four"^^xsd:anyURI ;
+            ns2:influenceSourceText "Radiohead's 2003 single \"2 + 2 = 5\", from their album Hail to the Thief, is Orwellian by title and content. Thom Yorke states, \"I was listening to a lot of political programs on BBC Radio 4. I found myself writing down little nonsense phrases, those Orwellian euphemisms that [the British and American governments] are so fond of. They became the background of the record.\" "^^xsd:string ] ;
+    prov:wasInfluencedBy <https://www.wikidata.org/wiki/Q208460> ;
+    ns3:name "Radiohead"^^xsd:string .
+
+<http://dbpedia.org/resource/Soft_Machine> a ns2:Group ;
+    rdfs:label "Soft Machine"^^xsd:string ;
+    prov:qualifiedDerivation [ a prov:Derivation ;
+            prov:entity <https://www.wikidata.org/wiki/Q208460> ;
+            ns2:influenceInformationSource "https://en.wikipedia.org/wiki/Nineteen_Eighty-Four"^^xsd:anyURI ;
+            ns2:influenceSourceText "In 1973, ex-Soft Machine bassist Hugh Hopper released an album called 1984 on the Columbia label (UK), consisting of instrumentals with Orwellian titles such as \"Miniluv\", \"Minipax\", \"Minitrue\", and so forth."^^xsd:string ] ;
+    prov:wasDerivedFrom <https://www.wikidata.org/wiki/Q208460> ;
+    ns3:name "Soft Machine"^^xsd:string .
+
+<http://dbpedia.org/resource/Spirit_(band)> a ns2:Group ;
+    rdfs:label "Spirit (band)"^^xsd:string ;
+    ns2:isBasedOn <https://www.wikidata.org/wiki/Q208460> ;
+    ns2:qualifiedBasis [ a ns2:Basis ;
+            prov:entity <https://www.wikidata.org/wiki/Q208460> ;
+            ns2:influenceInformationSource "https://en.wikipedia.org/wiki/Nineteen_Eighty-Four"^^xsd:anyURI ;
+            ns2:influenceSourceText "In 1970, the American rock group Spirit released the song \"1984\" based on Orwell's novel."^^xsd:string ] ;
+    ns3:name "Spirit (band)"^^xsd:string .
+
+<http://dbpedia.org/resource/Star_Trek:_The_Next_Generation> a ns2:AudiovisualEntity ;
+    rdfs:label "Star Trek: The Next Generation"^^xsd:string ;
+    prov:qualifiedInfluence [ a prov:EntityInfluence ;
+            prov:entity <https://www.wikidata.org/wiki/Q208460> ;
+            ns2:influenceInformationSource "https://en.wikipedia.org/wiki/Nineteen_Eighty-Four"^^xsd:anyURI ;
+            ns2:influenceSourceText "The two part episode Chain of Command on Star Trek: The Next Generation bears some resemblances to the novel. "^^xsd:string ] ;
+    prov:wasInfluencedBy <https://www.wikidata.org/wiki/Q208460> ;
+    ns3:title "Star Trek: The Next Generation"^^xsd:string .
+
+<http://dbpedia.org/resource/The_God_Complex> a ns2:AudiovisualEntity ;
+    rdfs:label "The God Complex"^^xsd:string ;
+    ns2:cites <https://www.wikidata.org/wiki/Q208460> ;
+    ns2:qualifiedCitation [ a ns2:Citation ;
+            prov:entity <https://www.wikidata.org/wiki/Q208460> ;
+            ns2:influenceInformationSource "https://en.wikipedia.org/wiki/Nineteen_Eighty-Four"^^xsd:anyURI ;
+            ns2:influenceSourceText "An episode of Doctor Who, called \"The God Complex\", depicts an alien ship disguised as a hotel containing Room 101-like spaces, and quotes the nursery rhyme as well. "^^xsd:string ] ;
+    ns3:title "The God Complex"^^xsd:string .
+
+<http://dbpedia.org/resource/The_Goon_Show> a ns2:AudiovisualEntity ;
+    rdfs:label "The Goon Show"^^xsd:string ;
+    ns2:isBasedOn <https://www.wikidata.org/wiki/Q208460> ;
+    ns2:qualifiedBasis [ a ns2:Basis ;
+            prov:entity <https://www.wikidata.org/wiki/Q208460> ;
+            ns2:influenceInformationSource "https://en.wikipedia.org/wiki/Nineteen_Eighty-Four"^^xsd:anyURI ;
+            ns2:influenceSourceText "In 1955, an episode of BBC's The Goon Show, 1985, was broadcast, written by Spike Milligan and Eric Sykes and based on Nigel Kneale's television adaptation. It was re-recorded about a month later with the same script but a slightly different cast. 1985 parodies many of the main scenes in Orwell's novel."^^xsd:string ] ;
+    ns3:title "The Goon Show"^^xsd:string .
+
+<http://dbpedia.org/resource/The_Jam> a ns2:Group ;
+    rdfs:label "The Jam"^^xsd:string ;
+    ns2:qualifiedReference [ a ns2:Reference ;
+            prov:entity <https://www.wikidata.org/wiki/Q208460> ;
+            ns2:influenceInformationSource "https://en.wikipedia.org/wiki/Nineteen_Eighty-Four"^^xsd:anyURI ;
+            ns2:influenceSourceText "In 1977, the British rock band The Jam released the album This Is the Modern World, which includes the track \"Standards\" by Paul Weller. This track concludes with the lyrics \"...and ignorance is strength, we have God on our side, look, you know what happened to Winston.\" "^^xsd:string ] ;
+    ns2:references <https://www.wikidata.org/wiki/Q208460> ;
+    ns3:name "The Jam"^^xsd:string .
+
+<http://dbpedia.org/resource/The_Resistance_(album)> a ns2:MusicAlbum ;
+    rdfs:label "The Resistance (album)"^^xsd:string ;
+    prov:qualifiedInfluence [ a prov:EntityInfluence ;
+            prov:entity <https://www.wikidata.org/wiki/Q208460> ;
+            ns2:influenceInformationSource "https://en.wikipedia.org/wiki/Nineteen_Eighty-Four"^^xsd:anyURI ;
+            ns2:influenceSourceText "In September 2009, the English progressive rock band Muse released The Resistance, which included songs influenced by Nineteen Eighty-Four. "^^xsd:string ] ;
+    prov:wasInfluencedBy <https://www.wikidata.org/wiki/Q208460> ;
+    ns3:title "The Resistance (album)"^^xsd:string .
+
+<http://dbpedia.org/resource/This_Is_the_Modern_World> a ns2:MusicAlbum ;
+    rdfs:label "This Is the Modern World"^^xsd:string ;
+    ns2:qualifiedReference [ a ns2:Reference ;
+            prov:entity <https://www.wikidata.org/wiki/Q208460> ;
+            ns2:influenceInformationSource "https://en.wikipedia.org/wiki/Nineteen_Eighty-Four"^^xsd:anyURI ;
+            ns2:influenceSourceText "In 1977, the British rock band The Jam released the album This Is the Modern World, which includes the track \"Standards\" by Paul Weller. This track concludes with the lyrics \"...and ignorance is strength, we have God on our side, look, you know what happened to Winston.\" "^^xsd:string ] ;
+    ns2:references <https://www.wikidata.org/wiki/Q208460> ;
+    ns3:title "This Is the Modern World"^^xsd:string .
+
+<https://musicbrainz.org/recording/09595161-717b-4ec5-94d1-9040aab8aae4> a ns2:Song ;
+    rdfs:label "Resistance"^^xsd:string ;
+    ns2:hasAuthor <https://www.wikidata.org/wiki/Q22151> ;
+    ns2:qualifiedReference [ a ns2:Reference ;
+            prov:entity <https://www.wikidata.org/wiki/Q208460> ;
+            ns2:hasInformationSource ns2:annotation_0,
+                ns2:annotation_1,
+                ns2:annotation_2,
+                ns2:annotation_3,
+                ns2:annotation_4,
+                ns2:annotation_7,
+                ns2:annotation_8,
+                ns2:annotation_9 ;
+            ns2:influenceInformationSource "https://genius.com/Muse-resistance-lyrics"^^xsd:anyURI ;
+            ns2:influenceSourceText "George Orwell’s 1984 contains a secret police known as the ‘Thought Police’ whose job was to prevent ‘thinkcrime’, more commonly ‘thoughtcrime’, which was simply any thought or action the totalitarian English Socialism, more commonly ‘Ingsoc’, Party did not approve of, such of love or political interest. Orwell described your only free space as “the few cubic inches inside your skull”, which is the only place what one would consider ‘the truth’ could be hidden. In this case, and throughout the album, Bellamy compares life in today’s capitalist world as very similar to Orwell’s dystopian Oceania, Eastasia or of course, Eurasia. It’s important to notice that Bellamy isn’t an outright anti-capitalist (he defined himself as a left-leaning libertarian), although The Resistance as an album undoubtedly has themes against the wealthy and the privileged. In addition, in a clever wordplay Bellamy mentions here three of the orwellian ministries: Love, Peace and Truth."^^xsd:string,
+                "He wants from the significant other not to let him go. Lips being sealed can be interpreted in two ways: one, they should be always ‘that’ close and two, they should never utter a word to anybody about each other. In 1984, they have to ‘keep their lips sealed’ i.e. keep their romance a secret, as love is considered a crime in the novel’s world. If the government found out about them, they would be punished, as specified in the verses."^^xsd:string,
+                "If a ceiling, roof or other structure caves in, it breaks and falls into the space below. This is just figuratively implying their worries that their hiding place may be exposed and they may get arrested for romantic love, which is a crime in the world of “1984”."^^xsd:string,
+                "In 1984, Winston and Julia have a secret rendezvous in a rented room of an antique shop, where there are no “telescreens” for surveillance such that their secret love affair may be hidden from the authorities. They live in fear that the Party may find out about their love and have them punished."^^xsd:string,
+                "In Orwell’s 1984, Winston and Julia cannot show any public signs of their relationship lest it be discovered by the Party; even a stray smile from Julia in public could lead to discovery and torture at the hands of the Party."^^xsd:string,
+                "It should have been okay for us to fall in love, but it’s too dangerous in the oppressive world we live in. In 1984, passion and love are considered forms of censored thought that would have been punished. They should have the freedom to love each other, but they do not."^^xsd:string,
+                "Metaphorically, it’s at night when we are safe, when we can do secret things. When the night ends, everybody can see us, so “we can’t pretend”. The only thing we can do is to run, and think that someone or something will save us. As this song and the whole album are influenced by 1984, we all know (spoiler alert!) that although they run and ask to be saved, they won’t be protected from harm."^^xsd:string,
+                "Winston and Julia are surely going to be arrested by the Ministry of Love for their secret love. They are bound to be broken apart. They cannot have a romantic relationship in the world of “1984”, where love is a crime, like we who live in a normal world and expect love to last forever. Any evidence of Winston and Julia meeting in secret and having a love affair must be concealed or erased."^^xsd:string ] ;
+    ns2:references <https://www.wikidata.org/wiki/Q208460> ;
+    ns3:hasPart [ a ns1:Lyrics ;
+            ns3:text """Is our secret safe tonight?
+And are we out of sight?
+Or will our world come tumbling down?
+Will they find our hiding place?
+Is this our last embrace?
+Or will the walls start caving in?
+
+It could be wrong, could be wrong, but it should have been right
+It could be wrong, could be wrong, to let our hearts ignite
+It could be wrong, could be wrong, are we digging a hole?
+It could be wrong, could be wrong, this is out of control
+It could be wrong, could be wrong, it can never last
+It could be wrong, could be wrong, must erase it fast
+It could be wrong, could be wrong, but it could have been right
+It could be wrong, could be...
+
+Love is our resistance
+They'll keep us apart and they won't stop breaking us down
+Hold me
+Our lips must always be sealed
+
+If we live a life in fear
+I'll wait a thousand years
+Just to see you smile again
+Kill your prayers for love and peace
+You'll wake the Thought Police
+We can't hide the truth inside
+You might also like
+It could be wrong, could be wrong, but it should have been right
+It could be wrong, could be wrong, to let our hearts ignite
+It could be wrong, could be wrong, are we digging a hole?
+It could be wrong, could be wrong, this is out of control
+It could be wrong, could be wrong, it can never last
+It could be wrong, could be wrong, must erase it fast
+It could be wrong, could be wrong, but it could have been right
+It could be wrong, could be...
+
+Love is our resistance
+They'll keep us apart and they won't stop breaking us down
+Hold me
+Our lips must always be sealed
+
+The night has reached its end
+We can't pretend
+We must run
+We must run
+It's time to run
+Take us away from here
+Protect us from further harm
+Resistance16Embed"""^^xsd:string ;
+            ns1:hasTextFragment ns2:fragment_0,
+                ns2:fragment_1,
+                ns2:fragment_2,
+                ns2:fragment_3,
+                ns2:fragment_4,
+                ns2:fragment_5,
+                ns2:fragment_6,
+                ns2:fragment_7,
+                ns2:fragment_8,
+                ns2:fragment_9 ] ;
+    ns3:title "Resistance"^^xsd:string .
+
+ns2:annotation_5 a ns2:Annotation ;
+    ns3:text "Winston is a diligent worker for the Party while Julia appears a fervent advocate for the Party’s activities and doctrines, but secretly they hate the Party and dream to rebel. Love, a crime in Oceania, is an act of rebellion against the Party, showing that they do not believe in the Party’s lies to control its people. Julia also makes clear that showing her affection for Winston is a highly effective form of protesting against the Party’s disapproval of sexual relationships."^^xsd:string .
+
+ns2:annotation_6 a ns2:Annotation ;
+    ns3:text "As party members, to have a love affair is a serious crime. They are eventually going to get caught and tortured to death in the Ministry of Love (which oversees brainwashing and torture). It’s only a matter of time. Winston and Julia are digging their own graves to fall in love, but they can’t control their love and desire."^^xsd:string .
+
+ns2:fragment_0 a ns1:TextFragment ;
+    ns2:hasAnnotation ns2:annotation_0 ;
+    ns3:text """Hold me
+ Our lips must always be sealed"""^^xsd:string .
+
+ns2:fragment_1 a ns1:TextFragment ;
+    ns2:hasAnnotation ns2:annotation_1 ;
+    ns3:text """The night has reached its end
+ We can’t pretend
+ We must run
+ We must run
+ It’s time to run
+ Take us away from here
+ Protect us from further harm
+ Resistance"""^^xsd:string .
+
+ns2:fragment_2 a ns1:TextFragment ;
+    ns2:hasAnnotation ns2:annotation_2 ;
+    ns3:text """If we live a life in fear
+ I’ll wait a thousand years
+ Just to see you smile again"""^^xsd:string .
+
+ns2:fragment_3 a ns1:TextFragment ;
+    ns2:hasAnnotation ns2:annotation_3 ;
+    ns3:text """It could be wrong, could be wrong, it can never last
+ It could be wrong, could be wrong, must erase it fast
+ It could be wrong, could be wrong, but it could have been right
+ It could be wrong, could be..."""^^xsd:string .
+
+ns2:fragment_4 a ns1:TextFragment ;
+    ns2:hasAnnotation ns2:annotation_4 ;
+    ns3:text """Kill your prayers for love and peace
+ You’ll wake the Thought Police
+ We can’t hide the truth inside"""^^xsd:string .
+
+ns2:fragment_5 a ns1:TextFragment ;
+    ns2:hasAnnotation ns2:annotation_5 ;
+    ns3:text "Love is our resistance"^^xsd:string .
+
+ns2:fragment_6 a ns1:TextFragment ;
+    ns2:hasAnnotation ns2:annotation_6 ;
+    ns3:text """It could be wrong, could be wrong, are we digging a hole?
+ It could be wrong, could be wrong, this is out of control"""^^xsd:string .
+
+ns2:fragment_7 a ns1:TextFragment ;
+    ns2:hasAnnotation ns2:annotation_7 ;
+    ns3:text """It could be wrong, could be wrong, but it should have been right
+ It could be wrong, could be wrong, to let our hearts ignite"""^^xsd:string .
+
+ns2:fragment_8 a ns1:TextFragment ;
+    ns2:hasAnnotation ns2:annotation_8 ;
+    ns3:text "Or will the walls start caving in?"^^xsd:string .
+
+ns2:fragment_9 a ns1:TextFragment ;
+    ns2:hasAnnotation ns2:annotation_9 ;
+    ns3:text """Is our secret safe tonight?
+ And are we out of sight?
+ Or will our world come tumbling down?
+ Will they find our hiding place?
+ Is this our last embrace?"""^^xsd:string .
+
+ns2:modern_rock a ns1:MusicGenre ;
+    rdfs:label "modern_rock"^^xsd:string .
+
+ns2:permanent_wave a ns1:MusicGenre ;
+    rdfs:label "permanent_wave"^^xsd:string .
+
+ns2:rock a ns1:MusicGenre ;
+    rdfs:label "rock"^^xsd:string .
+
+<https://www.wikidata.org/wiki/Q22151> a ns1:MusicEnsenble ;
+    rdfs:label "Muse"^^xsd:string ;
+    ns3:name "Muse"^^xsd:string ;
+    ns1:hasGenre ns2:modern_rock,
+        ns2:permanent_wave,
+        ns2:rock .
+
+ns2:annotation_0 a ns2:Annotation ;
+    ns3:text "He wants from the significant other not to let him go. Lips being sealed can be interpreted in two ways: one, they should be always ‘that’ close and two, they should never utter a word to anybody about each other. In 1984, they have to ‘keep their lips sealed’ i.e. keep their romance a secret, as love is considered a crime in the novel’s world. If the government found out about them, they would be punished, as specified in the verses."^^xsd:string .
+
+ns2:annotation_1 a ns2:Annotation ;
+    ns3:text "Metaphorically, it’s at night when we are safe, when we can do secret things. When the night ends, everybody can see us, so “we can’t pretend”. The only thing we can do is to run, and think that someone or something will save us. As this song and the whole album are influenced by 1984, we all know (spoiler alert!) that although they run and ask to be saved, they won’t be protected from harm."^^xsd:string .
+
+ns2:annotation_2 a ns2:Annotation ;
+    ns3:text "In Orwell’s 1984, Winston and Julia cannot show any public signs of their relationship lest it be discovered by the Party; even a stray smile from Julia in public could lead to discovery and torture at the hands of the Party."^^xsd:string .
+
+ns2:annotation_3 a ns2:Annotation ;
+    ns3:text "Winston and Julia are surely going to be arrested by the Ministry of Love for their secret love. They are bound to be broken apart. They cannot have a romantic relationship in the world of “1984”, where love is a crime, like we who live in a normal world and expect love to last forever. Any evidence of Winston and Julia meeting in secret and having a love affair must be concealed or erased."^^xsd:string .
+
+ns2:annotation_4 a ns2:Annotation ;
+    ns3:text "George Orwell’s 1984 contains a secret police known as the ‘Thought Police’ whose job was to prevent ‘thinkcrime’, more commonly ‘thoughtcrime’, which was simply any thought or action the totalitarian English Socialism, more commonly ‘Ingsoc’, Party did not approve of, such of love or political interest. Orwell described your only free space as “the few cubic inches inside your skull”, which is the only place what one would consider ‘the truth’ could be hidden. In this case, and throughout the album, Bellamy compares life in today’s capitalist world as very similar to Orwell’s dystopian Oceania, Eastasia or of course, Eurasia. It’s important to notice that Bellamy isn’t an outright anti-capitalist (he defined himself as a left-leaning libertarian), although The Resistance as an album undoubtedly has themes against the wealthy and the privileged. In addition, in a clever wordplay Bellamy mentions here three of the orwellian ministries: Love, Peace and Truth."^^xsd:string .
+
+ns2:annotation_7 a ns2:Annotation ;
+    ns3:text "It should have been okay for us to fall in love, but it’s too dangerous in the oppressive world we live in. In 1984, passion and love are considered forms of censored thought that would have been punished. They should have the freedom to love each other, but they do not."^^xsd:string .
+
+ns2:annotation_8 a ns2:Annotation ;
+    ns3:text "If a ceiling, roof or other structure caves in, it breaks and falls into the space below. This is just figuratively implying their worries that their hiding place may be exposed and they may get arrested for romantic love, which is a crime in the world of “1984”."^^xsd:string .
+
+ns2:annotation_9 a ns2:Annotation ;
+    ns3:text "In 1984, Winston and Julia have a secret rendezvous in a rented room of an antique shop, where there are no “telescreens” for surveillance such that their secret love affair may be hidden from the authorities. They live in fear that the Party may find out about their love and have them punished."^^xsd:string .
+
+<https://www.wikidata.org/wiki/Q208460> a ns2:LiteraryEntity ;
+    rdfs:label "1984"^^xsd:string ;
+    ns3:title "1984"^^xsd:string .
+
