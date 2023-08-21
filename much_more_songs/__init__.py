@@ -927,4 +927,10 @@ class MuchEx(object):
         x = re.extract_relations()
         print('______RELATION EXTRACTOR______')
         print(x)
+
+        # The cited creative works and people are stored inside the song_data dictionary to be passed as input for the graph population
+        song_data['referenced-creative-works'] = creative_works
+        song_data['cited-people'] = people
+
+
         return x
