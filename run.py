@@ -1,4 +1,4 @@
-from much_more_songs import *
+from MuCH_Extractor import *
 
 my_runner = MuchEx()
 my_data = my_runner.run('26R3e7bjY6e9dlgghide8L')
