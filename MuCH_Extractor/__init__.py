@@ -24,7 +24,7 @@ class SongDataCollector(object):
     GENIUS_ACCESS_TOKEN = os.getenv('GENIUS_ACCESS_TOKEN')
     MUSICBRAINZ_USER = os.getenv('MUSICBRAINZ_USER')
     MUSICBRAINZ_TOKEN = os.getenv('MUSICBRAINZ_TOKEN')
-    MBZ_USER_AGENT = "MucH-EX"
+    MBZ_USER_AGENT = "MucH-ExSo"
     MBZ_APP_VERSION = "0.1"
 
 
