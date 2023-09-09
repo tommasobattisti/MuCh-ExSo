@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 from SPARQLWrapper import SPARQLWrapper, JSON
 from bardapi import Bard
 from nltk.corpus import wordnet as wn
+from rdflib import Graph, URIRef, Literal, Namespace, RDF, RDFS, OWL, XSD, BNode
 
 nlp = en_core_web_sm.load()
 load_dotenv()
@@ -133,7 +134,7 @@ class SongDataCollector(object):
         mbz.auth(self.MUSICBRAINZ_USER, self.MUSICBRAINZ_TOKEN)
 
         mbz_song = self.get_musicbrainz_song(isrc)
-        print(mbz_song)
+        store['musicbrainz_id'] = mbz_song['recording']['id']
         artist_ids = [artist['artist']['id'] for artist in mbz_song['recording']['artist-credit']]
         artist_data = {}
         for artist_id in artist_ids:
@@ -141,18 +142,17 @@ class SongDataCollector(object):
                 artist_data[artist_id] = self.get_musicbrainz_artist(artist_id)
         store['artists'] = []
         for artist in mbz_song['recording']['artist-credit']:
-            artist_dict = {}
-            artist_dict['name'] = artist['artist']['name']
-            artist_dict['mbz_id'] = artist['artist']['id']
-            if 'disambiguation' in artist['artist']:
-                artist_dict['disambiguation'] = artist['artist']['disambiguation']
-            if artist_dict['mbz_id'] in artist_data:
-                wts = artist_data[artist_dict['mbz_id']]
-                artist_dict['type'] = wts['artist']['type']
-                for url in wts['artist']['url-relation-list']:
-                    if url['type'] == 'wikidata':
-                        artist_dict['wikidata_url'] = url['target']
-            store['artists'].append(artist_dict)
+
+            if store['name'].strip().lower() == artist['artist']['name'].strip().lower():
+                if 'disambiguation' in artist['artist']:
+                    store['disambiguation'] = artist['artist']['disambiguation']
+                store['mbz_id'] = artist['artist']['id']
+                if store['mbz_id'] in artist_data:
+                    wts = artist_data[store['mbz_id']]
+                    store['type'] = wts['artist']['type']
+                    for url in wts['artist']['url-relation-list']:
+                        if url['type'] == 'wikidata':
+                            store['wikidata_url'] = url['target']
         return store
 
 
@@ -438,11 +438,11 @@ class Disambiguator(object):
 
     def disambiguate(self):
         self.candidates = self.assign_scores()
-        print("\nSCORES:", self.candidates)
+        #print("\nSCORES:", self.candidates)
         self.candidates = self.get_sentence_similarity()
-        print("\nSIMILARITY:", self.candidates)
+        #print("\nSIMILARITY:", self.candidates)
         self.candidates = self.get_final_candidates()
-        print("\nFINAL:", self.candidates)
+        #print("\nFINAL:", self.candidates)
         return self.candidates
 
 
@@ -532,7 +532,7 @@ class Scraper(object):
             PREFIX xml: <http://www.w3.org/XML/1998/namespace>
             SELECT DISTINCT ?wikiLinks ?type ?dbEntities ?label ?mainEntityType
             WHERE { 
-                    VALUES ?type { dbo:Artist dbo:MusicalWork dbo:Artwork dbo:Film dbo:TelevisionShow dbo:TelevisionSeason dbo:TelevisionEpisode dbo:Poem dbo:Book dbo:Comic dbo:Play dbo:Group} #dbo:Person dbo:WrittenWork  dbo:RadioProgram 
+                    VALUES ?mainEntityType { dbo:Artist dbo:MusicalWork dbo:Artwork dbo:Film dbo:TelevisionShow dbo:TelevisionSeason dbo:TelevisionEpisode dbo:Poem dbo:Book dbo:Comic dbo:Play dbo:Group} #dbo:Person dbo:WrittenWork dbo:RadioProgram 
                     ?entity foaf:isPrimaryTopicOf wikipedia-en:"""+query_url+""";
                             dbo:wikiPageWikiLink ?dbEntities;
                             rdf:type ?mainEntityType .
@@ -566,7 +566,7 @@ class Scraper(object):
                             ls = str(a)
                             if ls not in wld:
                                 ent_id += 1
-                                wld[ls] = {"wikipedia link": link, "text": [], "entity id": "Entity-"+str(ent_id), 'class': classes[links.index(link)], 'label': label[links.index(link)],'db_uri': db_uri[links.index(link)]}
+                                wld[ls] = {"wikipedia-link": link, "text": [], "entity-id": "Entity-"+str(ent_id), 'class': classes[links.index(link)], 'label': label[links.index(link)],'db_uri': db_uri[links.index(link)]}
                             if a.text not in wld[ls]["text"]:
                                 wld[ls]['text'].append(a.text)
             self.entities[cw]['wiki_links'] = wld
@@ -574,7 +574,7 @@ class Scraper(object):
         for cw in self.entities:
             fast_check = {}
             for k in self.entities[cw]['wiki_links']:
-                fast_check[self.entities[cw]['wiki_links'][k]['entity id']] = (self.entities[cw]['wiki_links'][k]['wikipedia link'] , self.entities[cw]['wiki_links'][k]['class'], self.entities[cw]['wiki_links'][k]['db_uri'], self.entities[cw]['wiki_links'][k]['label'])
+                fast_check[self.entities[cw]['wiki_links'][k]['entity-id']] = (self.entities[cw]['wiki_links'][k]['wikipedia-link'] , self.entities[cw]['wiki_links'][k]['class'], self.entities[cw]['wiki_links'][k]['db_uri'], self.entities[cw]['wiki_links'][k]['label'])
             self.entities[cw]['fast-check'] = fast_check
         return self.entities
 
@@ -590,7 +590,7 @@ class Scraper(object):
                 src_to_parse.append(src_li)
                 for k in self.entities[cw]['wiki_links']:
                     if k in str_li:
-                        str_li  = str_li.replace(k, self.entities[cw]['wiki_links'][k]['entity id'])
+                        str_li  = str_li.replace(k, self.entities[cw]['wiki_links'][k]['entity-id'])
                         
                 str_li = re.sub(r'<.+?>', '', str_li)
                 str_li = re.sub(r'\[[0-9]+\]', ' ', str_li) #remove the numbers in square brackets (wikipedia references)
@@ -640,8 +640,8 @@ class RelationExtractor(object):
         }
 
 
-    def __init__(self, enties_dict):
-        self.entities = enties_dict
+    def __init__(self, entities_dict):
+        self.entities = entities_dict
 
     
 
@@ -663,7 +663,6 @@ class RelationExtractor(object):
         bard = Bard(token=self.GOOGLEBARD_TOKEN)
         for cw in self.entities:
             bard_res = bard.get_answer("You are an expert in relation extraction from plain text and your aim is to identify the existing relations between the creative work '"+cw+"', which is the implicit subject of the text you will be fed with, and other ENTITIES that you will find in the text. ### Return the relationships between '"+cw+"' and the entities marked as 'Entity- ' in the text in the following format: subject | relation | "+cw+" as a pandas dataframe following this example: ```df = pd.DataFrame({'Entity': ['Entity-', 'Entity-', 'Entity-'], 'Relation': ['based on', 'derived from', 'inspired by'], '"+cw+"': '"+cw+"' })```. ### Text: "+self.entities[cw]['to_parse_txt'])
-            print("\n\n\n\n", bard_res, "\n\n\n\n")
             out_list = bard_res['content'].replace('\n\n', ' ').replace('\n', ' ').replace('    ', ' ').replace('   ', ' ').replace('  ', ' ').split('```')
             for el in out_list:
                 if 'df = pd.DataFrame' in el:
@@ -871,6 +870,7 @@ class RelationExtractor(object):
             self.disambiguate_relations()
         except:
             self.get_relations_rb()
+            self.group_entities()
 
         return self.entities
 
@@ -883,7 +883,425 @@ class RelationExtractor(object):
 #_______________________________________________________
 #_______________________________________________________
 
-                    
+
+
+class KnowledgeGraphPopulator(object):
+    # Namespaces
+    core = Namespace("https://w3id.org/polifonia/ontology/core/")
+    mm = Namespace("https://w3id.org/polifonia/ontology/music-meta/")
+    prov = Namespace("http://www.w3.org/ns/prov#")
+    mucho = Namespace("https://raw.githubusercontent.com/tommasobattisti/MuCH-O/main/ontology/mucho.owl#")
+    # Classes
+    Agent = core.Agent
+    MusicEnsenble  = mm.MusicEnsenble
+    Person = core.Person
+    Musician = mm.Musician
+    InformationObject = core.InformationObject
+    AudiovisualEntity = mucho.AudiovisualEntity
+    LiteraryEntity = mucho.LiteraryEntity
+    VisualArtEntity = mucho.VisualArtEntity
+    MusicEntity = mm.MusicEntity
+    MusicAlbum = mucho.MusicAlbum
+    Song = mucho.Song
+    MusicArtist = mm.MusicArtist
+    MusicGenre = mm.MusicGenre
+    Influence = prov.Influence
+    EntityInfluence = prov.EntityInfluence
+    Inspiration = mucho.Inspiration
+    Derivation = prov.Derivation
+    Adaptation = mucho.Adaptation
+    Basis = mucho.Basis
+    Reference = mucho.Reference
+    Allusion = mucho.Allusion
+    Citation = mucho.Citation
+    Mention = mucho.Mention
+    Text = mm.Text
+    Lyrics = mm.Lyrics
+    TextFragment = mm.TextFragment
+    Annotation = mucho.Annotation
+
+    # Object properties
+    hasInformationSource = mucho.hasInformationSource
+    hasAuthor = mucho.hasAuthor
+    isAuthorOf = mucho.isAuthorOf
+    hasGenre = mm.hasGenre
+    isGenreOf = mm.isGenreOf
+    hasMember = core.hasMember
+    isMemberOf = core.isMemberOf
+    hasPart = core.hasPart
+    isPartOf = core.isPartOf
+    hasMusicEntityPart = mm.hasMusicEntityPart
+    isPartOfMusicEntity = mm.isPartOfMusicEntity
+    isTextFragmentOf = mm.isTextFragmentOf
+    hasTextFragment = mm.hasTextFragment
+    hasSource = mm.hasSource
+    influenced = prov.influenced
+    influencer = prov.influencer
+    entity = prov.entity
+    qualifiedInfluence = prov.qualifiedInfluence
+    qualifiedDerivation = prov.qualifiedDerivation
+    qualifiedAdaptation = mucho.qualifiedAdaptation
+    qualifiedBasis = mucho.qualifiedBasis
+    qualifiedReference = mucho.qualifiedReference
+    qualifiedAllusion = mucho.qualifiedAllusion
+    qualifiedCitation = mucho.qualifiedCitation
+    qualifiedMention = mucho.qualifiedMention
+    qualifiedInspiration = mucho.qualifiedInspiration
+    wasInfluencedBy = prov.wasInfluencedBy
+    wasDerivedFrom = prov.wasDerivedFrom
+    isAdaptationOf = mucho.isAdaptationOf
+    isBasedOn = mucho.isBasedOn
+    references = mucho.references
+    alludesTo = mucho.alludesTo
+    cites = mucho.cites
+    mentions = mucho.mentions
+    wasInspiredBy = mucho.wasInspiredBy
+    hasAnnotation = mucho.hasAnnotation
+    isAnnotationOf = mucho.isAnnotationOf
+
+    # Data properties
+    influenceInformation = mucho.influenceInformation
+    influenceInformationSource = mucho.influenceInformationSource
+    influenceSourceText = mucho.influenceSourceText
+    name = core.name
+    nickname = core.nickname
+    text = core.text
+    title = core.title
+
+
+    def __init__(self, song_dict, entities_dict):
+        self.song = song_dict
+        self.entities = entities_dict
+        self.mucho_gustore = Graph()
+
+
+    def get_musical_work_type(self, entity_id):
+        q_type = """
+                    PREFIX dbo: <http://dbpedia.org/ontology/>
+                    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                        
+                    SELECT ?type
+                    WHERE { 
+                            VALUES ?type { dbo:Album dbo:Song dbo:Single }
+                            <"""+entity_id+"""> rdf:type ?type.
+                            }
+                """
+
+        sparql = SPARQLWrapper("http://dbpedia.org/sparql")
+        sparql.setReturnFormat(JSON)
+        sparql.setQuery(q_type)
+        ent_type = sparql.query().convert()['results']['bindings'][0]['type']['value'].replace('http://dbpedia.org/ontology/', '')
+        if ent_type == 'Album':
+            return 'Album'
+        elif ent_type == 'Single' or ent_type == 'Song':
+            return 'Song'
+        else:
+            return 'MusicEntity'
+
+
+    def add_song_data(self):
+        song_uri = URIRef('https://musicbrainz.org/recording/'+self.song['musicbrainz_id'])
+        base_indv = 'https://raw.githubusercontent.com/tommasobattisti/MuCH-O/main/ontology/mucho.owl#'
+
+        # Add song
+        self.mucho_gustore.add((song_uri, RDF.type, self.Song))
+        self.mucho_gustore.add((song_uri, self.title, Literal(self.song['name'], datatype=XSD.string, normalize=False)))
+        self.mucho_gustore.add((song_uri, RDFS.label, Literal(self.song['name'], datatype=XSD.string, normalize=False)))
+
+        # Add song lyrics
+        lyrics_bn = BNode()
+        self.mucho_gustore.add((song_uri, self.hasPart, lyrics_bn))
+        self.mucho_gustore.add((lyrics_bn, RDF.type, self.Lyrics))
+        self.mucho_gustore.add((lyrics_bn, self.text, Literal(self.song['lyrics'], datatype=XSD.string, normalize=False)))
+
+        # Add text fragments and annotations to the lyrics
+        for ann_num, ann in enumerate(self.song['annotations']):
+            fr_name = base_indv+'fragment_'+str(ann_num)
+            ann_name = base_indv+'annotation_'+str(ann_num)
+            self.mucho_gustore.add((lyrics_bn, self.hasTextFragment, URIRef(fr_name)))
+            self.mucho_gustore.add((URIRef(fr_name), RDF.type, self.TextFragment))
+            self.mucho_gustore.add((URIRef(fr_name), self.text, Literal(ann[0].replace('\n\n', '\n'), datatype=XSD.string, normalize=False)))
+            self.mucho_gustore.add((URIRef(fr_name), self.hasAnnotation, URIRef(ann_name)))
+            self.mucho_gustore.add((URIRef(ann_name), RDF.type, self.Annotation))
+            self.mucho_gustore.add((URIRef(ann_name), self.text, Literal(ann[1].replace('\n\n', ' ').replace('\n', ' ').replace('   ', ' ').replace('  ', ' '), datatype=XSD.string, normalize=False)))
+
+
+        # Add song artists
+        for art in self.song['artists']:
+            if 'wikidata_url' in art:
+                art_uri = URIRef(art['wikidata_url'])
+            else:
+                art_uri = URIRef('https://musicbrainz.org/artist/'+self.song['artists'][art]['mbz_id'])
+
+            self.mucho_gustore.add((song_uri, self.hasAuthor, art_uri))
+            self.mucho_gustore.add((art_uri, self.name, Literal(art['name'], datatype=XSD.string, normalize=False)))
+            self.mucho_gustore.add((art_uri, RDFS.label, Literal(art['name'], datatype=XSD.string, normalize=False)))
+
+            if art['type'] == 'Group':
+                self.mucho_gustore.add((art_uri, RDF.type, self.MusicEnsenble))
+            elif art['type'] == 'Person':
+                self.mucho_gustore.add((art_uri, RDF.type, self.Musician))
+
+            # Add artists genres
+            for genre in self.song['artists'][art]['genres']:
+                genre = genre.replace(' ', '_')
+                genre_uri = URIRef(base_indv+genre)
+                self.mucho_gustore.add((art_uri, self.hasGenre, genre_uri))
+                self.mucho_gustore.add((genre_uri, RDF.type, self.MusicGenre))
+                self.mucho_gustore.add((genre_uri, RDFS.label, Literal(genre, datatype=XSD.string, normalize=False)))
+
+        return True
+    
+
+    def add_cw_data(self):
+        # Add relation with referenced creative work
+        song_uri = URIRef('https://musicbrainz.org/recording/'+self.song['musicbrainz_id'])
+        base_indv = 'https://raw.githubusercontent.com/tommasobattisti/MuCH-O/main/ontology/mucho.owl#'
+
+        for woa in self.entities:
+            woa_uri = URIRef('https://www.wikidata.org/wiki/'+ self.entities[woa]['id'])
+            self.mucho_gustore.add((song_uri, self.references, woa_uri))
+            self.mucho_gustore.add((woa_uri, self.title, Literal(woa, datatype=XSD.string, normalize=False)))
+            self.mucho_gustore.add((woa_uri, RDFS.label, Literal(woa, datatype=XSD.string, normalize=False)))
+            # Add reference information
+            reference_bn = BNode()
+            self.mucho_gustore.add((song_uri, self.qualifiedReference, reference_bn))
+            self.mucho_gustore.add((reference_bn, RDF.type, self.Reference))
+            self.mucho_gustore.add((reference_bn, self.entity, woa_uri))
+
+            woa_type = self.entities[woa]['dbpedia-type']
+
+            if woa_type == 'MusicalWork':
+                self.mucho_gustore.add((woa_uri, RDF.type, self.MusicEntity))
+            elif woa_type == 'Album':
+                self.mucho_gustore.add((woa_uri, RDF.type, self.MusicAlbum))
+            elif woa_type == 'Single' or woa_type == 'Song':
+                self.mucho_gustore.add((woa_uri, RDF.type, self.Song))
+            elif woa_type == 'Artwork':
+                self.mucho_gustore.add((woa_uri, RDF.type, self.VisualArtEntity))
+            elif woa_type == 'Film' or woa_type == 'TelevisionShow' or woa_type == "TelevisionSeason" or woa_type == 'TelevisionEpisode':
+                self.mucho_gustore.add((woa_uri, RDF.type, self.AudiovisualEntity))
+            elif woa_type == 'Poem' or woa_type == 'Book' or woa_type == 'Comic' or woa_type == 'Play':
+                self.mucho_gustore.add((woa_uri, RDF.type, self.LiteraryEntity))
+            else:
+                self.mucho_gustore.add((woa_uri, RDF.type, self.InformationObject))
+
+
+            # Add source url and information text about relation
+            for ref_woa in self.song['referenced-creative-works']:
+                if ref_woa == woa:
+                    for a in self.song['referenced-creative-works'][ref_woa]["annotation_number"]:
+                        string = self.song["annotations"][int(a)][1].replace('\n\n', ' ').replace('\n', ' ').replace('   ', ' ').replace('  ', ' ')
+                        self.mucho_gustore.add((reference_bn, self.influenceSourceText, Literal(string, datatype=XSD.string, normalize=False)))
+                        self.mucho_gustore.add((reference_bn, self.hasInformationSource, URIRef(base_indv+'annotation_'+str(a)))) #add the annotation as information source for the relation
+            self.mucho_gustore.add((reference_bn, self.influenceInformationSource, Literal(self.song['genius_url'], datatype=URIRef("http://www.w3.org/2001/XMLSchema#anyURI"))))
+
+        return True
+
+
+    def add_linked_entities_data(self):
+        for woa in self.entities:
+            woa_uri = URIRef('https://www.wikidata.org/wiki/'+ self.entities[woa]['id'])
+            # Add relations with other creative works
+            for ent in self.entities[woa]['entity-relations']:
+                ent_uri = URIRef(self.entities[woa]['fast-check'][ent][2])
+                ent_type = self.entities[woa]['fast-check'][ent][1]
+                #Add entity type
+                if ent_type == 'MusicalWork':
+                    db_et_query = """
+                    PREFIX dbo: <http://dbpedia.org/ontology/>
+                    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                        
+                    SELECT ?type
+                    WHERE { 
+                            VALUES ?type { dbo:Album dbo:Song dbo:Single }
+                            <"""+self.entities[woa]['fast-check'][ent][2]+"""> rdf:type ?type.
+                            }
+                    """
+
+                    sparql = SPARQLWrapper("http://dbpedia.org/sparql")
+                    sparql.setReturnFormat(JSON)
+                    sparql.setQuery(db_et_query)
+                    ent_type = sparql.query().convert()['results']['bindings'][0]['type']['value'].replace('http://dbpedia.org/ontology/', '')
+                    if ent_type == 'Album':
+                        self.mucho_gustore.add((ent_uri, RDF.type, self.MusicAlbum))
+                    elif ent_type == 'Single' or ent_type == 'Song':
+                        self.mucho_gustore.add((ent_uri, RDF.type, self.Song))
+                    else:
+                        self.mucho_gustore.add((ent_uri, RDF.type, self.MusicEntity))
+                    self.mucho_gustore.add((ent_uri, self.title, Literal(self.entities[woa]['fast-check'][ent][3], datatype=XSD.string, normalize=False))) #I repeat this line for every condiftional block because in some cases the property changes 
+                elif ent_type == 'Artwork':
+                    self.mucho_gustore.add((ent_uri, RDF.type, self.VisualArtEntity))
+                    self.mucho_gustore.add((ent_uri, self.title, Literal(self.entities[woa]['fast-check'][ent][3], datatype=XSD.string, normalize=False)))
+                elif ent_type == 'Film' or ent_type == 'TelevisionShow' or ent_type == "TelevisionSeason" or ent_type == 'TelevisionEpisode':
+                    self.mucho_gustore.add((ent_uri, RDF.type, self.AudiovisualEntity))
+                    self.mucho_gustore.add((ent_uri, self.title, Literal(self.entities[woa]['fast-check'][ent][3], datatype=XSD.string, normalize=False)))
+                elif ent_type == 'Poem' or ent_type == 'Book' or ent_type == 'Comic' or ent_type == 'Play':
+                    self.mucho_gustore.add((ent_uri, RDF.type, self.LiteraryEntity))
+                    self.mucho_gustore.add((ent_uri, self.title, Literal(self.entities[woa]['fast-check'][ent][3], datatype=XSD.string, normalize=False)))
+                elif ent_type == 'Person':
+                    self.mucho_gustore.add((ent_uri, RDF.type, self.Person))
+                    self.mucho_gustore.add((ent_uri, self.name, Literal(self.entities[woa]['fast-check'][ent][3], datatype=XSD.string, normalize=False)))
+                elif ent_type == 'Group':
+                    self.mucho_gustore.add((ent_uri, RDF.type, self.Group))
+                    self.mucho_gustore.add((ent_uri, self.name, Literal(self.entities[woa]['fast-check'][ent][3], datatype=XSD.string, normalize=False)))
+                
+                self.mucho_gustore.add((ent_uri, RDFS.label, Literal(self.entities[woa]['fast-check'][ent][3], datatype=XSD.string, normalize=False))) # In any case I add the label at the end
+
+                
+                # Add entity relation
+                if self.entities[woa]['entity-relations'] == 'based on':
+                    self.mucho_gustore.add((ent_uri, self.isBasedOn, woa_uri))
+                    based_on_bn = BNode()
+                    self.mucho_gustore.add((ent_uri, self.qualifiedBasis, based_on_bn))
+                    self.mucho_gustore.add((based_on_bn, RDF.type, self.Basis))
+                    self.mucho_gustore.add((based_on_bn, self.entity, woa_uri))
+                    self.mucho_gustore.add((based_on_bn, self.influenceInformationSource, Literal(self.entities[woa]["wikipedia_url"], datatype=URIRef("http://www.w3.org/2001/XMLSchema#anyURI"))))
+                    for gr in self.entities[woa]['entity-groups']:
+                        if ent in self.entities[woa]['entity-groups'][gr]:
+                            source_sent = self.entities[woa]['to_parse'][gr]
+                            for ent_g in self.entities[woa]['entity-groups'][gr]:
+                                if ent_g in source_sent:
+                                    source_sent = source_sent.replace(ent_g, self.entities[woa]['fast-check'][ent][3])
+                            self.mucho_gustore.add((based_on_bn, self.influenceSourceText, Literal(source_sent.replace('\n\n', ' ').replace('\n', ' ').replace('   ', ' ').replace('  ', ' '), datatype=XSD.string, normalize=False)))
+
+                elif self.entities[woa]['entity-relations'] == 'inspired by':
+                    self.mucho_gustore.add((ent_uri, self.wasInspiredBy, woa_uri))
+                    insp_by_bn = BNode()
+                    self.mucho_gustore.add((ent_uri, self.qualifiedInspiration, insp_by_bn))
+                    self.mucho_gustore.add((insp_by_bn, RDF.type, self.Inspiration))
+                    self.mucho_gustore.add((insp_by_bn, self.entity, woa_uri))
+                    self.mucho_gustore.add((insp_by_bn, self.influenceInformationSource, Literal(self.entities[woa]["wikipedia_url"], datatype=URIRef("http://www.w3.org/2001/XMLSchema#anyURI"))))
+                    for gr in self.entities[woa]['entity-groups']:
+                        if ent in self.entities[woa]['entity-groups'][gr]:
+                            source_sent = self.entities[woa]['to_parse'][gr]
+                            for ent_g in self.entities[woa]['entity-groups'][gr]:
+                                if ent_g in source_sent:
+                                    source_sent = source_sent.replace(ent_g, self.entities[woa]['fast-check'][ent][3])
+                            self.mucho_gustore.add((insp_by_bn, self.influenceSourceText, Literal(source_sent.replace('\n\n', ' ').replace('\n', ' ').replace('   ', ' ').replace('  ', ' '), datatype=XSD.string, normalize=False)))
+
+                elif self.entities[woa]['entity-relations'] == 'derived from':
+                    self.mucho_gustore.add((ent_uri, self.wasDerivedFrom, woa_uri))
+                    der_from_bn = BNode()
+                    self.mucho_gustore.add((ent_uri, self.qualifiedDerivation, der_from_bn))
+                    self.mucho_gustore.add((der_from_bn, RDF.type, self.Derivation))
+                    self.mucho_gustore.add((der_from_bn, self.entity, woa_uri))
+                    self.mucho_gustore.add((der_from_bn, self.influenceInformationSource, Literal(self.entities[woa]["wikipedia_url"], datatype=URIRef("http://www.w3.org/2001/XMLSchema#anyURI"))))
+                    for gr in self.entities[woa]['entity-groups']:
+                        if ent in self.entities[woa]['entity-groups'][gr]:
+                            source_sent = self.entities[woa]['to_parse'][gr]
+                            for ent_g in self.entities[woa]['entity-groups'][gr]:
+                                if ent_g in source_sent:
+                                    source_sent = source_sent.replace(ent_g, self.entities[woa]['fast-check'][ent][3])
+                            self.mucho_gustore.add((der_from_bn, self.influenceSourceText, Literal(source_sent.replace('\n\n', ' ').replace('\n', ' ').replace('   ', ' ').replace('  ', ' '), datatype=XSD.string, normalize=False)))
+
+                elif self.entities[woa]['entity-relations'] == 'adapted from':
+                    self.mucho_gustore.add((ent_uri, self.isAdaptationOf, woa_uri))
+                    ad_of_bn = BNode()
+                    self.mucho_gustore.add((ent_uri, self.qualifiedAdaptation, ad_of_bn))
+                    self.mucho_gustore.add((ad_of_bn, RDF.type, self.Adaptation))
+                    self.mucho_gustore.add((ad_of_bn, self.entity, woa_uri))
+                    self.mucho_gustore.add((ad_of_bn, self.influenceInformationSource, Literal(self.entities[woa]["wikipedia_url"], datatype=URIRef("http://www.w3.org/2001/XMLSchema#anyURI"))))
+                    for gr in self.entities[woa]['entity-groups']:
+                        if ent in self.entities[woa]['entity-groups'][gr]:
+                            source_sent = self.entities[woa]['to_parse'][gr]
+                            for ent_g in self.entities[woa]['entity-groups'][gr]:
+                                if ent_g in source_sent:
+                                    source_sent = source_sent.replace(ent_g, self.entities[woa]['fast-check'][ent][3])
+                            self.mucho_gustore.add((ad_of_bn, self.influenceSourceText, Literal(source_sent.replace('\n\n', ' ').replace('\n', ' ').replace('   ', ' ').replace('  ', ' '), datatype=XSD.string, normalize=False)))
+
+                elif self.entities[woa]['entity-relations'] == 'references':
+                    self.mucho_gustore.add((ent_uri, self.references, woa_uri))
+                    ref_bn = BNode()
+                    self.mucho_gustore.add((ent_uri, self.qualifiedReference, ref_bn))
+                    self.mucho_gustore.add((ref_bn, RDF.type, self.Reference))
+                    self.mucho_gustore.add((ref_bn, self.entity, woa_uri))
+                    self.mucho_gustore.add((ref_bn, self.influenceInformationSource, Literal(self.entities[woa]["wikipedia_url"], datatype=URIRef("http://www.w3.org/2001/XMLSchema#anyURI"))))
+                    for gr in self.entities[woa]['entity-groups']:
+                        if ent in self.entities[woa]['entity-groups'][gr]:
+                            source_sent = self.entities[woa]['to_parse'][gr]
+                            for ent_g in self.entities[woa]['entity-groups'][gr]:
+                                if ent_g in source_sent:
+                                    source_sent = source_sent.replace(ent_g, self.entities[woa]['fast-check'][ent][3])
+                            self.mucho_gustore.add((ref_bn, self.influenceSourceText, Literal(source_sent.replace('\n\n', ' ').replace('\n', ' ').replace('   ', ' ').replace('  ', ' '), datatype=XSD.string, normalize=False)))
+
+                elif self.entities[woa]['entity-relations'] == 'mentions':
+                    self.mucho_gustore.add((ent_uri, self.mentions, woa_uri))
+                    men_bn = BNode()
+                    self.mucho_gustore.add((ent_uri, self.qualifiedMention, men_bn))
+                    self.mucho_gustore.add((men_bn, RDF.type, self.Mention))
+                    self.mucho_gustore.add((men_bn, self.entity, woa_uri))
+                    self.mucho_gustore.add((men_bn, self.influenceInformationSource, Literal(self.entities[woa]["wikipedia_url"], datatype=URIRef("http://www.w3.org/2001/XMLSchema#anyURI"))))
+                    for gr in self.entities[woa]['entity-groups']:
+                        if ent in self.entities[woa]['entity-groups'][gr]:
+                            source_sent = self.entities[woa]['to_parse'][gr]
+                            for ent_g in self.entities[woa]['entity-groups'][gr]:
+                                if ent_g in source_sent:
+                                    source_sent = source_sent.replace(ent_g, self.entities[woa]['fast-check'][ent][3])
+                            self.mucho_gustore.add((men_bn, self.influenceSourceText, Literal(source_sent.replace('\n\n', ' ').replace('\n', ' ').replace('   ', ' ').replace('  ', ' '), datatype=XSD.string, normalize=False)))
+
+                elif self.entities[woa]['entity-relations'] == 'alludes to':
+                    self.mucho_gustore.add((ent_uri, self.alludesTo, woa_uri))
+                    all_bn = BNode()
+                    self.mucho_gustore.add((ent_uri, self.qualifiedAllusion, all_bn))
+                    self.mucho_gustore.add((all_bn, RDF.type, self.Allusion))
+                    self.mucho_gustore.add((all_bn, self.entity, woa_uri))
+                    self.mucho_gustore.add((all_bn, self.influenceInformationSource, Literal(self.entities[woa]["wikipedia_url"], datatype=URIRef("http://www.w3.org/2001/XMLSchema#anyURI"))))
+                    for gr in self.entities[woa]['entity-groups']:
+                        if ent in self.entities[woa]['entity-groups'][gr]:
+                            source_sent = self.entities[woa]['to_parse'][gr]
+                            for ent_g in self.entities[woa]['entity-groups'][gr]:
+                                if ent_g in source_sent:
+                                    source_sent = source_sent.replace(ent_g, self.entities[woa]['fast-check'][ent][3])
+                            self.mucho_gustore.add((all_bn, self.influenceSourceText, Literal(source_sent.replace('\n\n', ' ').replace('\n', ' ').replace('   ', ' ').replace('  ', ' '), datatype=XSD.string, normalize=False)))
+
+                elif self.entities[woa]['entity-relations'] == 'quotes':
+                    self.mucho_gustore.add((ent_uri, self.cites, woa_uri))
+                    cit_bn = BNode()
+                    self.mucho_gustore.add((ent_uri, self.qualifiedCitation, cit_bn))
+                    self.mucho_gustore.add((cit_bn, RDF.type, self.Citation))
+                    self.mucho_gustore.add((cit_bn, self.entity, woa_uri))
+                    self.mucho_gustore.add((cit_bn, self.influenceInformationSource, Literal(self.entities[woa]["wikipedia_url"], datatype=URIRef("http://www.w3.org/2001/XMLSchema#anyURI"))))
+                    for gr in self.entities[woa]['entity-groups']:
+                        if ent in self.entities[woa]['entity-groups'][gr]:
+                            source_sent = self.entities[woa]['to_parse'][gr]
+                            for ent_g in self.entities[woa]['entity-groups'][gr]:
+                                if ent_g in source_sent:
+                                    source_sent = source_sent.replace(ent_g, self.entities[woa]['fast-check'][ent][3])
+                            self.mucho_gustore.add((cit_bn, self.influenceSourceText, Literal(source_sent.replace('\n\n', ' ').replace('\n', ' ').replace('   ', ' ').replace('  ', ' '), datatype=XSD.string, normalize=False)))
+
+                else: # entity_relation[ent] == 'influenced by' or entity_relation[ent] == 'general influence'
+                    self.mucho_gustore.add((ent_uri, self.wasInfluencedBy, woa_uri))
+                    inf_by_bn = BNode()
+                    self.mucho_gustore.add((ent_uri, self.qualifiedInfluence, inf_by_bn))
+                    self.mucho_gustore.add((inf_by_bn, RDF.type, self.EntityInfluence))
+                    self.mucho_gustore.add((inf_by_bn, self.entity, woa_uri))
+                    self.mucho_gustore.add((inf_by_bn, self.influenceInformationSource, Literal(self.entities[woa]["wikipedia_url"], datatype=URIRef("http://www.w3.org/2001/XMLSchema#anyURI"))))
+                    for gr in self.entities[woa]['entity-groups']:
+                        if ent in self.entities[woa]['entity-groups'][gr]:
+                            source_sent = self.entities[woa]['to_parse'][gr]
+                            for ent_g in self.entities[woa]['entity-groups'][gr]:
+                                if ent_g in source_sent:
+                                    source_sent = source_sent.replace(ent_g, self.entities[woa]['fast-check'][ent][3])
+                            
+                            self.mucho_gustore.add((inf_by_bn, self.influenceSourceText, Literal(source_sent.replace('\n\n', ' ').replace('\n', ' ').replace('   ', ' ').replace('  ', ' '), datatype=XSD.string, normalize=False)))
+        
+        return True
+    
+
+
+    def serialize(self):
+        self.mucho_gustore.serialize(destination='./knowledge_graphs/'+self.song['spotify-id']+'.ttl', format='turtle')
+        return self.mucho_gustore
+    
+
+    def populate_graph(self):
+        self.add_song_data()
+        self.add_cw_data()
+        self.add_linked_entities_data()
+        knowledge_graph = self.serialize()
+        return knowledge_graph
+    
 
 
 
@@ -894,43 +1312,48 @@ class MuchEx(object):
 
     def run(self, song_id):
         song_data = SongDataCollector(song_id).get_song_data()
-        print('______SONG DATA______')
-        print(song_data)
+        #print('______SONG DATA______')
+        #print(song_data)
 
         annotations = song_data['annotations']
-        ie = InformationExtractor(annotations, song_data)
+        information_extractor = InformationExtractor(annotations, song_data)
         
-        creative_works, people = ie.extract_information()
+        creative_works, people = information_extractor.extract_information()
         if not creative_works:
             return "\n\n-------------------\nNo creative work has been found to be extracted.\n-------------------\n\n"
-        print('______INFORMATION EXTRACTOR______')
-        print(creative_works, people)
+        #print('______INFORMATION EXTRACTOR______')
+        #print(creative_works, people)
 
-        ce = CandidateExtractor(creative_works)
-        candidates = ce.get_candidates()
-        print('______CANDIDATE EXTRACTOR______')
-        print(candidates)
+        candidate_extractor = CandidateExtractor(creative_works)
+        candidates = candidate_extractor.get_candidates()
+        #print('______CANDIDATE EXTRACTOR______')
+        #print(candidates)
 
         disambiguator = Disambiguator(people, candidates, annotations)
-        entities = disambiguator.disambiguate()
-        print('______DISAMBIGUATOR______')
-        print(entities)
+        entities_data = disambiguator.disambiguate()
+        #print('______DISAMBIGUATOR______')
+        #print(entities_data)
 
-        scraper = Scraper(entities)
-        scraped = scraper.scrape()
-        print('______SCRAPER______')
-        print(scraped)
+        scraper = Scraper(entities_data)
+        entities_data = scraper.scrape()
+        #print('______SCRAPER______')
+        #print(entities_data)
 
-
-
-        re = RelationExtractor(scraped)
-        x = re.extract_relations()
-        print('______RELATION EXTRACTOR______')
-        print(x)
+        relation_extractor = RelationExtractor(entities_data)
+        entities_data = relation_extractor.extract_relations()
+        #print('______RELATION EXTRACTOR______')
+        #print(entities_data)
 
         # The cited creative works and people are stored inside the song_data dictionary to be passed as input for the graph population
         song_data['referenced-creative-works'] = creative_works
         song_data['cited-people'] = people
 
+        #print('\n\n\n\n______SONG DATA______\n\n')
+        #print(song_data)
 
-        return x
+        graph_populator = KnowledgeGraphPopulator(song_data, entities_data)
+        kg = graph_populator.populate_graph()
+        #print('______GRAPH POPULATOR______')
+        #print(kg)
+
+        return kg
