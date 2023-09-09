@@ -1,0 +1,218 @@
+@prefix ns1: <https://raw.githubusercontent.com/tommasobattisti/MuCH-O/main/ontology/mucho.owl#> .
+@prefix ns2: <https://w3id.org/polifonia/ontology/core/> .
+@prefix ns3: <https://w3id.org/polifonia/ontology/music-meta/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://dbpedia.org/resource/Async_(album)> rdfs:label "Async (album)"^^xsd:string ;
+    prov:qualifiedInfluence [ a prov:EntityInfluence ;
+            prov:entity <https://www.wikidata.org/wiki/Q1988792> ;
+            ns1:influenceInformationSource "https://en.wikipedia.org/wiki/The_Sheltering_Sky"^^xsd:anyURI ;
+            ns1:influenceSourceText "The song \"fullmoon\" from Async (album)'s 2017 album Async (album) contains excerpts of the novel presented in several languages."^^xsd:string ] ;
+    prov:wasInfluencedBy <https://www.wikidata.org/wiki/Q1988792> .
+
+<http://dbpedia.org/resource/Discipline_(King_Crimson_album)> rdfs:label "Discipline (King Crimson album)"^^xsd:string ;
+    prov:qualifiedInfluence [ a prov:EntityInfluence ;
+            prov:entity <https://www.wikidata.org/wiki/Q1988792> ;
+            ns1:influenceInformationSource "https://en.wikipedia.org/wiki/The_Sheltering_Sky"^^xsd:anyURI ;
+            ns1:influenceSourceText "The 1981 album Discipline (King Crimson album) by Discipline (King Crimson album) includes an eight-minute instrumental composition titled \"The Sheltering Sky\". \"Sheltering sky\" is also referenced in the lyrics of the song \"Walking on Air\" from their 1995 album THRAK."^^xsd:string ] ;
+    prov:wasInfluencedBy <https://www.wikidata.org/wiki/Q1988792> .
+
+<http://dbpedia.org/resource/Enemy_of_the_Sun> rdfs:label "Enemy of the Sun"^^xsd:string ;
+    prov:qualifiedInfluence [ a prov:EntityInfluence ;
+            prov:entity <https://www.wikidata.org/wiki/Q1988792> ;
+            ns1:influenceInformationSource "https://en.wikipedia.org/wiki/The_Sheltering_Sky"^^xsd:anyURI ;
+            ns1:influenceSourceText "The song \"Lost\" by Enemy of the Sun on the album Enemy of the Sun opens with a sample from the film. Also their album Enemy of the Sun has a tracks entitled \"Shelter\" and \" A Season in the Sky\"."^^xsd:string ] ;
+    prov:wasInfluencedBy <https://www.wikidata.org/wiki/Q1988792> .
+
+<http://dbpedia.org/resource/Fem_2_Fem> rdfs:label "Fem 2 Fem"^^xsd:string ;
+    prov:qualifiedInfluence [ a prov:EntityInfluence ;
+            prov:entity <https://www.wikidata.org/wiki/Q1988792> ;
+            ns1:influenceInformationSource "https://en.wikipedia.org/wiki/The_Sheltering_Sky"^^xsd:anyURI ;
+            ns1:influenceSourceText "The 1992 album Woman to Woman by Fem 2 Fem has a reference to this book in the song \"Obsession\".[citation needed]"^^xsd:string ] ;
+    prov:wasInfluencedBy <https://www.wikidata.org/wiki/Q1988792> .
+
+<http://dbpedia.org/resource/Hypothetical_(album)> rdfs:label "Hypothetical (album)"^^xsd:string ;
+    prov:qualifiedInfluence [ a prov:EntityInfluence ;
+            prov:entity <https://www.wikidata.org/wiki/Q1988792> ;
+            ns1:influenceInformationSource "https://en.wikipedia.org/wiki/The_Sheltering_Sky"^^xsd:anyURI ;
+            ns1:influenceSourceText "The 2001 album Hypothetical (album) by Hypothetical (album) has a song titled \"Sheltering Sky.\"[citation needed]"^^xsd:string ] ;
+    prov:wasInfluencedBy <https://www.wikidata.org/wiki/Q1988792> .
+
+<http://dbpedia.org/resource/King_Crimson> rdfs:label "King Crimson"^^xsd:string ;
+    prov:qualifiedInfluence [ a prov:EntityInfluence ;
+            prov:entity <https://www.wikidata.org/wiki/Q1988792> ;
+            ns1:influenceInformationSource "https://en.wikipedia.org/wiki/The_Sheltering_Sky"^^xsd:anyURI ;
+            ns1:influenceSourceText "The 1981 album King Crimson by King Crimson includes an eight-minute instrumental composition titled \"The Sheltering Sky\". \"Sheltering sky\" is also referenced in the lyrics of the song \"Walking on Air\" from their 1995 album THRAK."^^xsd:string ] ;
+    prov:wasInfluencedBy <https://www.wikidata.org/wiki/Q1988792> .
+
+<http://dbpedia.org/resource/Neurosis_(band)> rdfs:label "Neurosis (band)"^^xsd:string ;
+    prov:qualifiedInfluence [ a prov:EntityInfluence ;
+            prov:entity <https://www.wikidata.org/wiki/Q1988792> ;
+            ns1:influenceInformationSource "https://en.wikipedia.org/wiki/The_Sheltering_Sky"^^xsd:anyURI ;
+            ns1:influenceSourceText "The song \"Lost\" by Neurosis (band) on the album Neurosis (band) opens with a sample from the film. Also their album Neurosis (band) has a tracks entitled \"Shelter\" and \" A Season in the Sky\"."^^xsd:string ] ;
+    prov:wasInfluencedBy <https://www.wikidata.org/wiki/Q1988792> .
+
+<http://dbpedia.org/resource/Ryuichi_Sakamoto> rdfs:label "Ryuichi Sakamoto"^^xsd:string ;
+    prov:qualifiedInfluence [ a prov:EntityInfluence ;
+            prov:entity <https://www.wikidata.org/wiki/Q1988792> ;
+            ns1:influenceInformationSource "https://en.wikipedia.org/wiki/The_Sheltering_Sky"^^xsd:anyURI ;
+            ns1:influenceSourceText "The song \"fullmoon\" from Ryuichi Sakamoto's 2017 album Ryuichi Sakamoto contains excerpts of the novel presented in several languages."^^xsd:string ] ;
+    prov:wasInfluencedBy <https://www.wikidata.org/wiki/Q1988792> .
+
+<http://dbpedia.org/resource/Scenes_from_the_Second_Storey> rdfs:label "Scenes from the Second Storey"^^xsd:string ;
+    prov:qualifiedInfluence [ a prov:EntityInfluence ;
+            prov:entity <https://www.wikidata.org/wiki/Q1988792> ;
+            ns1:influenceInformationSource "https://en.wikipedia.org/wiki/The_Sheltering_Sky"^^xsd:anyURI ;
+            ns1:influenceSourceText "Scenes from the Second Storey's first album Scenes from the Second Storey opens with a similar sample."^^xsd:string ] ;
+    prov:wasInfluencedBy <https://www.wikidata.org/wiki/Q1988792> .
+
+<http://dbpedia.org/resource/Synchronicity_(The_Police_album)> rdfs:label "Synchronicity (The Police album)"^^xsd:string ;
+    prov:qualifiedInfluence [ a prov:EntityInfluence ;
+            prov:entity <https://www.wikidata.org/wiki/Q1988792> ;
+            ns1:influenceInformationSource "https://en.wikipedia.org/wiki/The_Sheltering_Sky"^^xsd:anyURI ;
+            ns1:influenceSourceText "The 1983 album Synchronicity (The Police album) by Synchronicity (The Police album) includes a song called \"Synchronicity (The Police album)\", the lyrics of which contain the phrase \"beneath the sheltering sky\" and are based on the tragic story of the three dancers who wish to have tea in the desert, but end up dead from the heat, with their cups filled only with sand. The story is told to the character Port in Chapter 5."^^xsd:string ] ;
+    prov:wasInfluencedBy <https://www.wikidata.org/wiki/Q1988792> .
+
+<http://dbpedia.org/resource/Tea_in_the_Sahara> rdfs:label "Tea in the Sahara"^^xsd:string ;
+    prov:qualifiedInfluence [ a prov:EntityInfluence ;
+            prov:entity <https://www.wikidata.org/wiki/Q1988792> ;
+            ns1:influenceInformationSource "https://en.wikipedia.org/wiki/The_Sheltering_Sky"^^xsd:anyURI ;
+            ns1:influenceSourceText "The 1983 album Tea in the Sahara by Tea in the Sahara includes a song called \"Tea in the Sahara\", the lyrics of which contain the phrase \"beneath the sheltering sky\" and are based on the tragic story of the three dancers who wish to have tea in the desert, but end up dead from the heat, with their cups filled only with sand. The story is told to the character Port in Chapter 5."^^xsd:string ] ;
+    prov:wasInfluencedBy <https://www.wikidata.org/wiki/Q1988792> .
+
+<http://dbpedia.org/resource/Teoman_(singer)> rdfs:label "Teoman (singer)"^^xsd:string ;
+    prov:qualifiedInfluence [ a prov:EntityInfluence ;
+            prov:entity <https://www.wikidata.org/wiki/Q1988792> ;
+            ns1:influenceInformationSource "https://en.wikipedia.org/wiki/The_Sheltering_Sky"^^xsd:anyURI ;
+            ns1:influenceSourceText "The song \"İki Yabancı\" by Teoman (singer) on the album On Yedi makes a lyrical reference to the Turkish title of the movie.[citation needed]"^^xsd:string ] ;
+    prov:wasInfluencedBy <https://www.wikidata.org/wiki/Q1988792> .
+
+<http://dbpedia.org/resource/The_Eye_of_Every_Storm> rdfs:label "The Eye of Every Storm"^^xsd:string ;
+    prov:qualifiedInfluence [ a prov:EntityInfluence ;
+            prov:entity <https://www.wikidata.org/wiki/Q1988792> ;
+            ns1:influenceInformationSource "https://en.wikipedia.org/wiki/The_Sheltering_Sky"^^xsd:anyURI ;
+            ns1:influenceSourceText "The song \"Lost\" by The Eye of Every Storm on the album The Eye of Every Storm opens with a sample from the film. Also their album The Eye of Every Storm has a tracks entitled \"Shelter\" and \" A Season in the Sky\"."^^xsd:string ] ;
+    prov:wasInfluencedBy <https://www.wikidata.org/wiki/Q1988792> .
+
+<http://dbpedia.org/resource/The_God_Machine_(band)> rdfs:label "The God Machine (band)"^^xsd:string ;
+    prov:qualifiedInfluence [ a prov:EntityInfluence ;
+            prov:entity <https://www.wikidata.org/wiki/Q1988792> ;
+            ns1:influenceInformationSource "https://en.wikipedia.org/wiki/The_Sheltering_Sky"^^xsd:anyURI ;
+            ns1:influenceSourceText "The God Machine (band)'s first album The God Machine (band) opens with a similar sample."^^xsd:string ] ;
+    prov:wasInfluencedBy <https://www.wikidata.org/wiki/Q1988792> .
+
+<http://dbpedia.org/resource/The_Police> rdfs:label "The Police"^^xsd:string ;
+    prov:qualifiedInfluence [ a prov:EntityInfluence ;
+            prov:entity <https://www.wikidata.org/wiki/Q1988792> ;
+            ns1:influenceInformationSource "https://en.wikipedia.org/wiki/The_Sheltering_Sky"^^xsd:anyURI ;
+            ns1:influenceSourceText "The 1983 album The Police by The Police includes a song called \"The Police\", the lyrics of which contain the phrase \"beneath the sheltering sky\" and are based on the tragic story of the three dancers who wish to have tea in the desert, but end up dead from the heat, with their cups filled only with sand. The story is told to the character Port in Chapter 5."^^xsd:string ] ;
+    prov:wasInfluencedBy <https://www.wikidata.org/wiki/Q1988792> .
+
+<http://dbpedia.org/resource/Threshold_(band)> rdfs:label "Threshold (band)"^^xsd:string ;
+    prov:qualifiedInfluence [ a prov:EntityInfluence ;
+            prov:entity <https://www.wikidata.org/wiki/Q1988792> ;
+            ns1:influenceInformationSource "https://en.wikipedia.org/wiki/The_Sheltering_Sky"^^xsd:anyURI ;
+            ns1:influenceSourceText "The 2001 album Threshold (band) by Threshold (band) has a song titled \"Sheltering Sky.\"[citation needed]"^^xsd:string ] ;
+    prov:wasInfluencedBy <https://www.wikidata.org/wiki/Q1988792> .
+
+<https://musicbrainz.org/recording/25dc959d-b68e-43c6-820c-b27b4cb3f05e> a ns1:Song ;
+    rdfs:label "Tea In The Sahara"^^xsd:string ;
+    ns1:qualifiedReference [ a ns1:Reference ;
+            prov:entity <https://www.wikidata.org/wiki/Q1988792> ;
+            ns1:hasInformationSource ns1:annotation_0,
+                ns1:annotation_1,
+                ns1:annotation_2,
+                ns1:annotation_3 ;
+            ns1:influenceInformationSource "https://genius.com/The-police-tea-in-the-sahara-lyrics"^^xsd:anyURI ;
+            ns1:influenceSourceText "An allusion to Paul Bowles' work The Sheltering Sky in which he brings forth a famous Morrocan tale about three sisters longing for tea in the Sahara – which they inevitibly find."^^xsd:string,
+                "Paul Bowles has written very many books but he wrote a book called The Sheltering Sky which became a film by Bertolucci, a few years ago. I read it long before it was a film. It’s one of the most beautiful, sustained, poetic novels I’ve ever read… There was a story within that story – that was a sort of Arab legend that was told in the story of three sisters who invite a prince to a tea party out in the desert to have tea, tea in the Sahara. They have tea, and it’s wonderful, and he promises to come back and he never does. They just wait and wait and wait until it’s too late. I just loved this story and wrote a song called ‘Tea In The Sahara’. I don’t know whether Paul Bowles ever heard it, probably not, but it’s still one of my favourite songs.“ - All This Time, Interactive CD-ROM, 1995"^^xsd:string,
+                "Sting explained that in the book The Sheltering Sky, there is a prince who never returns to the three sisters who wait for him in the desert: There was a story within that story – that was a sort of Arab legend that was told in the story of three sisters who invite a prince to a tea party out in the desert to have tea, tea in the Sahara. They have tea, and it’s wonderful, and he promises to come back and he never does. They just wait and wait and wait until it’s too late."^^xsd:string,
+                "The following is from the book The Sheltering Sky: Many days later another caravan was passing and a man saw something on top of the highest dune there. And when they went up to see, they found Outka, Mimouna and Aicha; they were still there, lying the same way as when they had gone to sleep. And all three of the glasses,‘ he held up his own little tea glass, 'were full of sand. That was how they had their tea in the Sahara."^^xsd:string ] ;
+    ns1:references <https://www.wikidata.org/wiki/Q1988792> ;
+    ns2:hasPart [ a ns3:Lyrics ;
+            ns2:text """My sisters and I
+Have one wish before we die
+And it may sound strange
+As if our minds are deranged
+Please don't ask us why
+Beneath the sheltering sky
+We have this strange obsession
+You have the means in your possession
+
+Tea in the Sahara with you
+Tea in the Sahara with you
+
+The young man agreed
+He would satisfy their need
+So they danced for his pleasure
+With a joy you could not measure
+They wait for him here
+The same place every year
+Beneath the sheltering sky
+Across the desert he would fly
+
+Tea in the Sahara with you
+Tea in the Sahara with you
+Tea in the Sahara with you
+Tea in the Sahara with you
+You might also like
+The sky turned to black
+Would he ever come back?
+They would climb a high dune
+They would pray to the moon
+But he'd never return
+So the sisters would burn
+As their eyes searched the land
+With their cups still full of sand
+
+Tea in the Sahara with you
+Tea in the Sahara with you
+
+Tea in the Sahara with you
+Tea in the Sahara with youEmbed"""^^xsd:string ;
+            ns3:hasTextFragment ns1:fragment_0,
+                ns1:fragment_1,
+                ns1:fragment_2,
+                ns1:fragment_3 ] ;
+    ns2:title "Tea In The Sahara"^^xsd:string .
+
+ns1:fragment_0 a ns3:TextFragment ;
+    ns1:hasAnnotation ns1:annotation_0 ;
+    ns2:text "Would he ever come back?"^^xsd:string .
+
+ns1:fragment_1 a ns3:TextFragment ;
+    ns1:hasAnnotation ns1:annotation_1 ;
+    ns2:text """They would climb a high dune
+ They would pray to the moon
+ But he’d never return
+ So the sisters would burn
+ As their eyes searched the land
+ With their cups still full of sand"""^^xsd:string .
+
+ns1:fragment_2 a ns3:TextFragment ;
+    ns1:hasAnnotation ns1:annotation_2 ;
+    ns2:text "Beneath the sheltering sky"^^xsd:string .
+
+ns1:fragment_3 a ns3:TextFragment ;
+    ns1:hasAnnotation ns1:annotation_3 ;
+    ns2:text """Tea in the Sahara with you
+ Tea in the Sahara with you"""^^xsd:string .
+
+ns1:annotation_0 a ns1:Annotation ;
+    ns2:text "Sting explained that in the book The Sheltering Sky, there is a prince who never returns to the three sisters who wait for him in the desert: There was a story within that story – that was a sort of Arab legend that was told in the story of three sisters who invite a prince to a tea party out in the desert to have tea, tea in the Sahara. They have tea, and it’s wonderful, and he promises to come back and he never does. They just wait and wait and wait until it’s too late."^^xsd:string .
+
+ns1:annotation_1 a ns1:Annotation ;
+    ns2:text "The following is from the book The Sheltering Sky: Many days later another caravan was passing and a man saw something on top of the highest dune there. And when they went up to see, they found Outka, Mimouna and Aicha; they were still there, lying the same way as when they had gone to sleep. And all three of the glasses,‘ he held up his own little tea glass, 'were full of sand. That was how they had their tea in the Sahara."^^xsd:string .
+
+ns1:annotation_2 a ns1:Annotation ;
+    ns2:text "An allusion to Paul Bowles' work The Sheltering Sky in which he brings forth a famous Morrocan tale about three sisters longing for tea in the Sahara – which they inevitibly find."^^xsd:string .
+
+ns1:annotation_3 a ns1:Annotation ;
+    ns2:text "Paul Bowles has written very many books but he wrote a book called The Sheltering Sky which became a film by Bertolucci, a few years ago. I read it long before it was a film. It’s one of the most beautiful, sustained, poetic novels I’ve ever read… There was a story within that story – that was a sort of Arab legend that was told in the story of three sisters who invite a prince to a tea party out in the desert to have tea, tea in the Sahara. They have tea, and it’s wonderful, and he promises to come back and he never does. They just wait and wait and wait until it’s too late. I just loved this story and wrote a song called ‘Tea In The Sahara’. I don’t know whether Paul Bowles ever heard it, probably not, but it’s still one of my favourite songs.“ - All This Time, Interactive CD-ROM, 1995"^^xsd:string .
+
+<https://www.wikidata.org/wiki/Q1988792> a ns1:LiteraryEntity ;
+    rdfs:label "The Sheltering Sky"^^xsd:string ;
+    ns2:title "The Sheltering Sky"^^xsd:string .
+
